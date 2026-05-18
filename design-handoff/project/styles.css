@@ -1,0 +1,148 @@
+/* Fraction Dojo — lesson screen */
+
+@import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Gaegu:wght@400;700&display=swap');
+
+:root {
+  /* Paper & wood palette */
+  --paper:        #f6ecd6;
+  --paper-warm:   #efe1c1;
+  --paper-edge:   #d9c79c;
+  --tatami:       #d8b878;
+  --tatami-deep:  #b78f4d;
+  --tatami-stripe:#caa063;
+
+  --wood:         #c7884f;
+  --wood-deep:    #8a5224;
+  --wood-grain:   #6b3f1f;
+  --wood-shadow:  rgba(73, 41, 17, 0.35);
+
+  --ink:          #221b15;
+  --ink-soft:     #3a2e23;
+  --gi-cream:     #f6ecd6;
+  --gi-shadow:    #e0d2af;
+  --sash-red:     #d8453d;
+  --sash-deep:    #a82e28;
+
+  /* Piece colors — vivid but warm, distinguishable from a distance */
+  --p-1:    #d2a273;   /* whole, raw wood */
+  --p-1-d:  #a87543;
+  --p-2:    #e85f4e;   /* halves — coral red */
+  --p-2-d:  #ad3a2c;
+  --p-4:    #f3b13a;   /* quarters — gold */
+  --p-4-d:  #b8801f;
+  --p-8:    #7ab560;   /* eighths — leaf green */
+  --p-8-d:  #4f853c;
+  --p-16:   #5ba5d9;   /* sixteenths — sky blue */
+  --p-16-d: #2f6f9e;
+  --p-32:   #a586d4;   /* thirty-seconds — lavender */
+  --p-32-d: #6f55a0;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #1a1410;
+  font-family: 'Fredoka', system-ui, sans-serif;
+  font-weight: 500;
+  color: var(--ink);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#root { width: 100%; height: 100%; }
+
+/* Stage — the lesson is a fixed-size canvas scaled to viewport */
+.stage {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background:
+    radial-gradient(ellipse at top, #2c211a 0%, #160f0b 60%, #0a0705 100%);
+}
+
+.frame {
+  width: 1366px;
+  height: 900px;
+  position: relative;
+  transform-origin: center center;
+  border-radius: 28px;
+  overflow: hidden;
+  box-shadow:
+    0 30px 80px rgba(0,0,0,0.55),
+    0 0 0 6px #2a1f17,
+    0 0 0 10px #1a120c;
+}
+
+/* All buttons reset */
+button {
+  font-family: inherit;
+  cursor: pointer;
+  border: 0;
+  background: none;
+  color: inherit;
+  padding: 0;
+}
+
+/* Pieces */
+.piece {
+  cursor: pointer;
+  transition: transform 120ms ease, filter 120ms ease;
+}
+.piece.choppable:hover { filter: brightness(1.06); transform: translateZ(0); }
+.piece.choppable:hover .piece-glow { opacity: 1; }
+.piece-glow { transition: opacity 140ms ease; opacity: 0; pointer-events: none; }
+
+.piece.selected .piece-stroke { stroke-width: 6; }
+
+@keyframes pulseGlow {
+  0%, 100% { opacity: 0.55; }
+  50% { opacity: 1; }
+}
+.pulse-glow { animation: pulseGlow 1400ms ease-in-out infinite; }
+
+@keyframes wiggle {
+  0%, 100% { transform: rotate(0deg); }
+  25%      { transform: rotate(-2deg); }
+  75%      { transform: rotate(2deg); }
+}
+.tool-active { animation: wiggle 900ms ease-in-out infinite; }
+
+@keyframes pop {
+  0%   { transform: scale(0.6); opacity: 0; }
+  60%  { transform: scale(1.08); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+.pop-in { animation: pop 280ms cubic-bezier(.34,1.56,.64,1) both; }
+
+@keyframes floatUp {
+  0%   { transform: translateY(8px); opacity: 0; }
+  100% { transform: translateY(0); opacity: 1; }
+}
+.float-up { animation: floatUp 360ms ease-out both; }
+
+@keyframes bob {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-6px); }
+}
+.bob { animation: bob 3200ms ease-in-out infinite; }
+
+/* Tatami floor stripes — subtle */
+.tatami-pattern {
+  background:
+    repeating-linear-gradient(
+      90deg,
+      var(--tatami) 0px,
+      var(--tatami) 110px,
+      var(--tatami-stripe) 110px,
+      var(--tatami-stripe) 112px,
+      var(--tatami) 112px,
+      var(--tatami) 222px,
+      var(--tatami-deep) 222px,
+      var(--tatami-deep) 224px
+    );
+}
