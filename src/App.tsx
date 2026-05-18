@@ -1,4 +1,4 @@
-import { Button } from '@/components/ui/button'
+import { Button } from '@/components/ui/button';
 
 function App() {
   return (
@@ -15,7 +15,7 @@ function App() {
       <Button disabled>Begin Training (coming soon)</Button>
       <p className="text-sm text-stone-400">PR 1 · project scaffold</p>
     </main>
-  )
+  );
 }
 
-export default App
+export default App;
