@@ -9,7 +9,14 @@
  */
 
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { type Board, type Rect, type Tool, findPiece, gluablePairs } from '@/core/board';
+import {
+  type Board,
+  type Rect,
+  type Tool,
+  type LabelKind,
+  findPiece,
+  gluablePairs,
+} from '@/core/board';
 import { type Seam, seamBetween } from '@/core/rect';
 import { canChopFurther } from './chop-limit';
 
@@ -44,6 +51,10 @@ interface PieceViewProps {
   tool: Tool | null;
   locked: boolean;
   chopLimit?: number;
+  /** When set, the matching label pulses to draw the student's attention. */
+  highlightLabel?: LabelKind;
+  /** When set, the numerator and denominator become independently tappable. */
+  onLabelTap?: (id: string, label: LabelKind) => void;
   onTap: (id: string) => void;
 }
 
@@ -55,6 +66,8 @@ function PieceView({
   tool,
   locked,
   chopLimit,
+  highlightLabel,
+  onLabelTap,
   onTap,
 }: PieceViewProps) {
   const style = locked ? STONE_STYLE : pieceStyle(denominator);
@@ -204,7 +217,22 @@ function PieceView({
             userSelect: 'none',
           }}
         >
-          <span>{numerator}</span>
+          <span
+            className={highlightLabel === 'numerator' ? 'label-pulse' : undefined}
+            role={onLabelTap ? 'button' : undefined}
+            tabIndex={onLabelTap ? 0 : undefined}
+            onClick={
+              onLabelTap
+                ? (event) => {
+                    event.stopPropagation();
+                    onLabelTap(id, 'numerator');
+                  }
+                : undefined
+            }
+            style={onLabelTap ? { cursor: 'pointer' } : undefined}
+          >
+            {numerator}
+          </span>
           <span
             style={{
               width: '0.95em',
@@ -214,7 +242,22 @@ function PieceView({
               margin: '0.12em 0',
             }}
           />
-          <span>{denominator}</span>
+          <span
+            className={highlightLabel === 'denominator' ? 'label-pulse' : undefined}
+            role={onLabelTap ? 'button' : undefined}
+            tabIndex={onLabelTap ? 0 : undefined}
+            onClick={
+              onLabelTap
+                ? (event) => {
+                    event.stopPropagation();
+                    onLabelTap(id, 'denominator');
+                  }
+                : undefined
+            }
+            style={onLabelTap ? { cursor: 'pointer' } : undefined}
+          >
+            {denominator}
+          </span>
         </div>
       </div>
     </button>
@@ -317,11 +360,27 @@ interface BoardViewProps {
   tool: Tool | null;
   /** Tightest denominator the chop tool may reach (puzzle-specific). */
   chopLimit?: number;
+  /** When set, the matching label on every piece pulses. */
+  highlightLabel?: LabelKind;
+  /** A colored region overlay drawn over the board — used to point a follow-up
+   *  question at a slice (one piece) or the whole board (a group). */
+  highlight?: { rect: Rect; color: string };
+  /** When set, a piece's numerator and denominator become independently tappable. */
+  onLabelTap?: (id: string, label: LabelKind) => void;
   onPieceTap: (id: string) => void;
   onGlue: (idA: string, idB: string) => void;
 }
 
-export function BoardView({ board, tool, chopLimit, onPieceTap, onGlue }: BoardViewProps) {
+export function BoardView({
+  board,
+  tool,
+  chopLimit,
+  highlightLabel,
+  highlight,
+  onLabelTap,
+  onPieceTap,
+  onGlue,
+}: BoardViewProps) {
   const [chopFx, setChopFx] = useState<ChopFxState | null>(null);
   // A monotonic counter keys each flash, so two chops in the same millisecond
   // still remount ChopFx (Date.now() would collide and drop the second one).
@@ -412,6 +471,8 @@ export function BoardView({ board, tool, chopLimit, onPieceTap, onGlue }: BoardV
             tool={tool}
             locked={piece.locked ?? false}
             chopLimit={chopLimit}
+            highlightLabel={highlightLabel}
+            onLabelTap={onLabelTap}
             onTap={handlePieceTap}
           />
         ))}
@@ -422,6 +483,24 @@ export function BoardView({ board, tool, chopLimit, onPieceTap, onGlue }: BoardV
 
         {chopFx && (
           <ChopFx key={chopFx.key} fx={chopFx} onDone={() => setChopFx(null)} />
+        )}
+
+        {highlight && (
+          <div
+            aria-hidden
+            style={{
+              position: 'absolute',
+              left: `${highlight.rect.x * 100}%`,
+              top: `${highlight.rect.y * 100}%`,
+              width: `${highlight.rect.w * 100}%`,
+              height: `${highlight.rect.h * 100}%`,
+              border: `5px solid ${highlight.color}`,
+              borderRadius: 12,
+              boxShadow: `inset 0 0 0 2px rgba(255,255,255,0.55), 0 0 22px ${highlight.color}`,
+              pointerEvents: 'none',
+              zIndex: 4,
+            }}
+          />
         )}
       </div>
     </div>

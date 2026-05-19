@@ -1,16 +1,18 @@
 /* The lesson screen — the dojo, driven by the lesson engine.
  *
  * It walks the student through the curriculum in ./lessons. A `board` step is
- * a puzzle solved on the manipulative; a `question` step keeps the board on
- * screen as a scratchpad and asks for a fraction beneath the sensei. Tools
- * reveal progressively — a button appears only once a puzzle has introduced
- * it. Each step ends with a Continue gate.
+ * a puzzle (start board → goal board), optionally followed by understanding-
+ * check sub-prompts where the student taps numbers from a palette to fill one
+ * or two slots, each colour-coded to a region on the board. A `question` step
+ * keeps the board on screen as a scratchpad and asks for a fraction. Tools
+ * reveal progressively. Each step ends with a Continue gate.
  */
 
 import { useState } from 'react';
 import {
   type Board,
   type Tool,
+  type Rect,
   createBoard,
   chop,
   glue,
@@ -20,11 +22,13 @@ import {
   canSimplify,
   findPiece,
 } from '@/core/board';
-import type { Step } from '@/core/lesson';
+import type { Step, SubPromptSlot } from '@/core/lesson';
 import { fraction } from '@/core/fraction';
 import { BoardView } from './BoardView';
 import { QuestionPanel } from './QuestionPanel';
 import { Confetti } from './Confetti';
+import { GoalPreview } from './GoalPreview';
+import { NumberPad } from './NumberPad';
 import { canChopFurther } from './chop-limit';
 import { playSound } from './sound';
 import { LESSONS } from './lessons';
@@ -40,9 +44,12 @@ import '@/styles/dojo.css';
 const FIRST_STEP = LESSONS[0].steps[0];
 const INITIAL_BOARD = FIRST_STEP.kind === 'board' ? FIRST_STEP.startBoard : createBoard();
 
-// A beat after a completing move before the win is declared — lets the chop
-// or glue land before the celebration begins.
-const SETTLE_MS = 400;
+// A pause after a completing move before the follow-ups or the celebration —
+// long enough for the sensei's success line to be read.
+const SETTLE_MS = 1200;
+
+// A pause showing a sub-prompt's "right" line before advancing to the next.
+const FOLLOWUP_RIGHT_MS = 1300;
 
 // Every tool introduced by a board step up to and including (lessonIndex,
 // stepIndex) — drives which tool buttons are on screen.
@@ -63,6 +70,31 @@ function stepBoard(step: Step): Board {
   return step.kind === 'board' ? step.startBoard : step.scratchBoard;
 }
 
+// The bounding rect over a slot's highlighted pieces — single piece, group of
+// pieces, or nothing if the slot has no highlight.
+function highlightFor(
+  slot: SubPromptSlot,
+  board: Board,
+): { rect: Rect; color: string } | undefined {
+  if (!slot.color) return undefined;
+  const ids =
+    slot.highlightPieces ?? (slot.highlightPiece ? [slot.highlightPiece] : []);
+  if (ids.length === 0) return undefined;
+  const rects = ids.flatMap((id) => {
+    const piece = findPiece(board, id);
+    return piece ? [piece.rect] : [];
+  });
+  if (rects.length === 0) return undefined;
+  const minX = Math.min(...rects.map((r) => r.x));
+  const minY = Math.min(...rects.map((r) => r.y));
+  const maxX = Math.max(...rects.map((r) => r.x + r.w));
+  const maxY = Math.max(...rects.map((r) => r.y + r.h));
+  return {
+    rect: { x: minX, y: minY, w: maxX - minX, h: maxY - minY },
+    color: slot.color,
+  };
+}
+
 export function LessonScreen() {
   const [lessonIndex, setLessonIndex] = useState(0);
   const [stepIndex, setStepIndex] = useState(0);
@@ -73,6 +105,12 @@ export function LessonScreen() {
   const [numInput, setNumInput] = useState('');
   const [denInput, setDenInput] = useState('');
   const [feedbackWrong, setFeedbackWrong] = useState(false);
+  const [followUpIndex, setFollowUpIndex] = useState<number | null>(null);
+  const [followUpFeedback, setFollowUpFeedback] = useState<
+    'none' | 'right' | 'wrong'
+  >('none');
+  const [slotIndex, setSlotIndex] = useState(0);
+  const [slotValues, setSlotValues] = useState<(number | null)[]>([]);
 
   const lesson = LESSONS[lessonIndex];
   const step = lesson?.steps[stepIndex];
@@ -80,24 +118,85 @@ export function LessonScreen() {
   const isQuestion = step?.kind === 'question';
   const revealed = revealedTools(lessonIndex, stepIndex);
 
-  // A step's goal is met — celebrate it, with a belt-up jingle on a belt's
-  // final step and a plain success chime otherwise.
+  // The current sub-prompt — undefined unless we are in the follow-up phase.
+  const followUp =
+    followUpIndex !== null && step?.kind === 'board' && step.followUps
+      ? step.followUps[followUpIndex]
+      : undefined;
+  const currentSlot = followUp?.slots[slotIndex];
+
+  // The colored region overlay on the play board — comes from the focused slot.
+  const highlight = currentSlot ? highlightFor(currentSlot, board) : undefined;
+
+  // A step's goal is met — celebrate, with a belt-up jingle on a belt's final.
   const celebrate = () => {
     setCelebrating(true);
     const lastStep = !!lesson && stepIndex + 1 >= lesson.steps.length;
     playSound(lastStep ? 'beltUp' : 'success');
   };
 
-  // Apply a board change. If it completes the step, let the board settle for
-  // a beat before declaring the win — so the chop or glue lands first.
+  // Apply a board change. If it completes the step, settle for a beat, then
+  // either enter the follow-up phase or celebrate directly.
   const applyMove = (next: Board) => {
     setBoard(next);
     if (step?.kind === 'board' && step.isComplete(next)) {
+      const completedStep = step;
       setSettling(true);
       window.setTimeout(() => {
         setSettling(false);
-        celebrate();
+        if (completedStep.followUps && completedStep.followUps.length > 0) {
+          const firstSub = completedStep.followUps[0];
+          setFollowUpIndex(0);
+          setSlotIndex(0);
+          setSlotValues(new Array(firstSub.slots.length).fill(null));
+        } else {
+          celebrate();
+        }
       }, SETTLE_MS);
+    }
+  };
+
+  // Move to the next sub-prompt — or, if this was the last, celebrate.
+  const advanceFollowUp = () => {
+    if (!step || step.kind !== 'board' || !step.followUps || followUpIndex === null) {
+      return;
+    }
+    setFollowUpFeedback('none');
+    const next = followUpIndex + 1;
+    if (next >= step.followUps.length) {
+      setFollowUpIndex(null);
+      setSlotIndex(0);
+      setSlotValues([]);
+      celebrate();
+    } else {
+      const nextSub = step.followUps[next];
+      setFollowUpIndex(next);
+      setSlotIndex(0);
+      setSlotValues(new Array(nextSub.slots.length).fill(null));
+    }
+  };
+
+  // The student tapped a tile. Check it against the focused slot's correct
+  // value; if right, fill the slot and advance focus (or finish the sub-prompt);
+  // if wrong, show the slot's wrong-line and wait for a correct tap.
+  const handleTileTap = (value: number) => {
+    if (!followUp || followUpFeedback === 'right') return;
+    const slot = followUp.slots[slotIndex];
+    if (value === slot.correctValue) {
+      const updated = slotValues.map((v, i) => (i === slotIndex ? value : v));
+      setSlotValues(updated);
+      setFollowUpFeedback('none');
+      if (slotIndex + 1 >= followUp.slots.length) {
+        setFollowUpFeedback('right');
+        playSound('continue');
+        window.setTimeout(advanceFollowUp, FOLLOWUP_RIGHT_MS);
+      } else {
+        setSlotIndex(slotIndex + 1);
+        playSound('select');
+      }
+    } else {
+      setFollowUpFeedback('wrong');
+      playSound('wrong');
     }
   };
 
@@ -124,6 +223,10 @@ export function LessonScreen() {
     setFeedbackWrong(false);
     setNumInput('');
     setDenInput('');
+    setFollowUpIndex(null);
+    setFollowUpFeedback('none');
+    setSlotIndex(0);
+    setSlotValues([]);
   };
 
   // Check a question step's answer.
@@ -159,7 +262,7 @@ export function LessonScreen() {
   // Which tools are usable now — a board step's allowed set, or, on a question
   // scratchpad, every tool learned so far.
   const toolAllowed = (t: Tool) => {
-    if (!step || celebrating || settling) return false;
+    if (!step || celebrating || settling || followUpIndex !== null) return false;
     return step.kind === 'board' ? step.allowedTools.includes(t) : revealed.has(t);
   };
   const chopLimit = step?.kind === 'board' ? step.maxDenominator : undefined;
@@ -169,8 +272,7 @@ export function LessonScreen() {
   const simplifyEnabled =
     toolAllowed('simplify') && board.pieces.some((p) => canSimplify(board, p.id));
 
-  // The tool BoardView reflects — the selected one only if it's usable now;
-  // otherwise the board shows no affordances and a tool must be picked.
+  // The tool BoardView reflects — the selected one only if it's usable now.
   const activeTool: Tool | null = tool && toolAllowed(tool) ? tool : null;
 
   // Picking a tool — nothing is auto-selected; the student chooses.
@@ -180,11 +282,11 @@ export function LessonScreen() {
   };
 
   const handlePieceTap = (id: string) => {
-    if (settling) return;
+    if (settling || followUpIndex !== null) return;
     const piece = findPiece(board, id);
     if (!piece) return;
     if (piece.locked) {
-      playSound('wrong'); // the stone master cannot be cut
+      playSound('wrong');
       return;
     }
     if (tool === 'chop' && chopEnabled && canChopFurther(piece.value, chopLimit)) {
@@ -194,12 +296,12 @@ export function LessonScreen() {
       playSound('simplify');
       applyMove(simplify(board, id));
     } else {
-      playSound('wrong'); // the tap produced no move — nudge the student
+      playSound('wrong');
     }
   };
 
   const handleGlue = (idA: string, idB: string) => {
-    if (settling) return;
+    if (settling || followUpIndex !== null) return;
     if (glueEnabled && canGlue(board, idA, idB)) {
       playSound('glue');
       applyMove(glue(board, idA, idB));
@@ -218,11 +320,18 @@ export function LessonScreen() {
     if (celebrating) {
       return step.kind === 'question' ? step.correctLine : step.successLine;
     }
+    if (followUp && currentSlot) {
+      if (followUpFeedback === 'right') return followUp.correctLine;
+      if (followUpFeedback === 'wrong') return currentSlot.wrongLine;
+      return currentSlot.prompt;
+    }
+    if (settling && step.kind === 'board') return step.successLine;
     if (step.kind === 'question' && feedbackWrong) return step.wrongLine;
     return step.instruction;
   };
   const senseiText = senseiSays();
-  const beltLabel = lesson ? lesson.title : 'Belt earned!';
+
+  const goalBoard = step?.kind === 'board' ? step.goalBoard : undefined;
 
   return (
     <div className="stage">
@@ -230,7 +339,7 @@ export function LessonScreen() {
         <DojoBackground />
         {celebrating && <Confetti />}
 
-        {/* top bar — pause left, belt + lesson title centered */}
+        {/* top bar — pause on the left, current belt + step progress centered */}
         <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 112, zIndex: 5 }}>
           <div
             style={{ position: 'absolute', left: 24, top: '50%', transform: 'translateY(-50%)' }}
@@ -247,7 +356,11 @@ export function LessonScreen() {
           >
             <BeltBar
               rankIndex={Math.min(lessonIndex, LESSONS.length - 1)}
-              label={beltLabel}
+              label={
+                lesson
+                  ? `${lesson.title} · ${stepIndex + 1} / ${lesson.steps.length}`
+                  : 'All Belts Earned'
+              }
             />
           </div>
         </div>
@@ -289,6 +402,19 @@ export function LessonScreen() {
                   onNumerator={editNumerator}
                   onDenominator={editDenominator}
                   onSubmit={submitAnswer}
+                />
+              </div>
+            )}
+            {followUp && !celebrating && followUpFeedback !== 'right' && (
+              <div style={{ marginTop: 52 }}>
+                <NumberPad
+                  options={followUp.options}
+                  slots={followUp.slots.map((s, i) => ({
+                    value: slotValues[i] ?? null,
+                    color: s.color,
+                  }))}
+                  focusedIndex={slotIndex}
+                  onTileTap={handleTileTap}
                 />
               </div>
             )}
@@ -350,10 +476,11 @@ export function LessonScreen() {
                 board={board}
                 tool={activeTool}
                 chopLimit={chopLimit}
+                highlight={highlight}
                 onPieceTap={handlePieceTap}
                 onGlue={handleGlue}
               />
-              {!celebrating && step && (
+              {!celebrating && followUpIndex === null && step && (
                 <button
                   type="button"
                   onClick={() => {
@@ -379,8 +506,7 @@ export function LessonScreen() {
             </div>
           </div>
 
-          {/* tools — only those a puzzle has introduced; "Your Tools" pinned to
-              the board's top, the buttons grouped so 4rem gaps fall between them */}
+          {/* tools column — a goal thumbnail above, then revealed tool buttons */}
           <div
             style={{
               display: 'flex',
@@ -390,6 +516,8 @@ export function LessonScreen() {
               fontFamily: 'Fredoka, system-ui, sans-serif',
             }}
           >
+            {goalBoard && <GoalPreview board={goalBoard} />}
+
             <div
               style={{
                 marginBottom: 28,

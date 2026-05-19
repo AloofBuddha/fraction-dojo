@@ -14,7 +14,8 @@ export type SoundName =
   | 'beltUp'
   | 'continue'
   | 'select'
-  | 'reset';
+  | 'reset'
+  | 'gong';
 
 // The AudioContext is created lazily — browsers block audio until a user
 // gesture, and every caller here runs inside a tap handler.
@@ -96,6 +97,11 @@ const SOUNDS: Record<SoundName, () => void> = {
   },
   select: () => tone({ freq: 520, dur: 0.06, type: 'triangle', gain: 0.09 }),
   reset: () => tone({ freq: 520, freqEnd: 240, dur: 0.18, gain: 0.12 }),
+  gong: () => {
+    tone({ freq: 110, dur: 1.8, type: 'sine', gain: 0.22 });
+    tone({ freq: 165, dur: 1.6, type: 'sine', delay: 0.02, gain: 0.1 });
+    tone({ freq: 220, dur: 1.4, type: 'sine', delay: 0.04, gain: 0.07 });
+  },
 };
 
 /**
@@ -109,6 +115,11 @@ const FILES: Partial<Record<SoundName, string>> = {
   simplify: '/assets/sounds/simplify.mp3',
   success: '/assets/sounds/fanfare.mp3',
   beltUp: '/assets/sounds/belt-up.mp3',
+};
+
+// Per-name playback-volume overrides — anything not listed plays at 0.8.
+const VOLUME: Partial<Record<SoundName, number>> = {
+  success: 0.45, // the fanfare file is much louder than the others
 };
 
 // Warm the browser cache and learn each file's real duration at module load,
@@ -134,6 +145,7 @@ const FALLBACK_MS: Record<SoundName, number> = {
   continue: 240,
   select: 100,
   reset: 200,
+  gong: 1800,
 };
 
 /** How long a sound runs, in ms — the real file duration once known. */
@@ -166,7 +178,7 @@ function playSynth(name: SoundName): void {
 function playFile(url: string, name: SoundName): void {
   try {
     const audio = new Audio(url);
-    audio.volume = 0.8;
+    audio.volume = VOLUME[name] ?? 0.8;
     // play() returns a Promise in browsers, undefined under a test DOM.
     void audio.play()?.catch(() => playSynth(name));
   } catch {

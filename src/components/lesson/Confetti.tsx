@@ -1,18 +1,42 @@
-/* A one-shot confetti burst — mounted while a step's success is celebrated. */
+/* A celebration burst — multiple "fireworks" mounted while a step's success
+ * is celebrated. Each burst sends particles outward from a centre, then they
+ * fall and fade. Layouts are generated once at module load (impure randomness
+ * belongs outside render). */
 
-const COLORS = ['#e85f4e', '#f3b13a', '#7ab560', '#5ba5d9', '#e87fb4', '#fdf6e2'];
+import type { CSSProperties } from 'react';
 
-// Bit layouts are generated once at module load (impure randomness belongs
-// out of render) and reused for every burst.
-const BITS = Array.from({ length: 32 }, (_, i) => {
-  const size = 8 + Math.random() * 9;
+const COLORS = ['#e85f4e', '#f3b13a', '#7ab560', '#5ba5d9', '#e87fb4', '#fdf6e2', '#fff5c8'];
+const BURST_COUNT = 5;
+const PARTICLES_PER_BURST = 14;
+
+interface Particle {
+  dx: number; // offset (px) the particle travels at its peak
+  dy: number;
+  color: string;
+}
+
+interface Burst {
+  cx: number; // centre, % of the layer
+  cy: number;
+  delay: number; // seconds — staggers the bursts
+  particles: Particle[];
+}
+
+const BURSTS: Burst[] = Array.from({ length: BURST_COUNT }, (_, i) => {
+  const particles: Particle[] = Array.from({ length: PARTICLES_PER_BURST }, (_, j) => {
+    const angle = (j / PARTICLES_PER_BURST) * Math.PI * 2 + Math.random() * 0.25;
+    const dist = 110 + Math.random() * 90;
+    return {
+      dx: Math.cos(angle) * dist,
+      dy: Math.sin(angle) * dist,
+      color: COLORS[(i * 3 + j) % COLORS.length],
+    };
+  });
   return {
-    color: COLORS[i % COLORS.length],
-    left: Math.random() * 100,
-    width: size,
-    height: size * 0.55,
-    delay: Math.random() * 0.4,
-    duration: 1.3 + Math.random() * 0.9,
+    cx: 18 + Math.random() * 64,
+    cy: 22 + Math.random() * 28,
+    delay: i * 0.22 + Math.random() * 0.08,
+    particles,
   };
 });
 
@@ -28,19 +52,30 @@ export function Confetti() {
         zIndex: 6,
       }}
     >
-      {BITS.map((bit, i) => (
+      {BURSTS.map((burst, i) => (
         <div
           key={i}
-          className="confetti-bit"
           style={{
-            left: `${bit.left}%`,
-            width: bit.width,
-            height: bit.height,
-            background: bit.color,
-            animationDelay: `${bit.delay}s`,
-            animationDuration: `${bit.duration}s`,
+            position: 'absolute',
+            left: `${burst.cx}%`,
+            top: `${burst.cy}%`,
           }}
-        />
+        >
+          {burst.particles.map((p, j) => (
+            <div
+              key={j}
+              className="firework-bit"
+              style={
+                {
+                  '--dx': `${p.dx}px`,
+                  '--dy': `${p.dy}px`,
+                  background: p.color,
+                  animationDelay: `${burst.delay}s`,
+                } as CSSProperties
+              }
+            />
+          ))}
+        </div>
       ))}
     </div>
   );

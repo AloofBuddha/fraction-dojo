@@ -32,6 +32,9 @@ export interface Board {
 /** The three operations a student can apply to a piece on the board. */
 export type Tool = 'chop' | 'glue' | 'simplify';
 
+/** The two labels on a piece — numerator above the bar, denominator below. */
+export type LabelKind = 'numerator' | 'denominator';
+
 /**
  * A piece's id is derived from its rect. Pieces always tile the board, so no
  * two share a rect — the id is therefore unique and fully deterministic, with

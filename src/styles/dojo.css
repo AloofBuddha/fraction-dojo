@@ -119,16 +119,59 @@ body {
   transform-origin: 50% 100%;
 }
 
-/* One-shot confetti burst on a step's success. */
-.confetti-bit {
+/* A piece label glowing and pulsing to draw the student's eye — used in the
+   fraction intro and in any inquiry step that asks "click this number." */
+@keyframes dojo-label-pulse {
+  0%, 100% {
+    transform: scale(1);
+    text-shadow: 0 2px 0 #b8801f, 0 4px 6px rgba(0,0,0,0.25);
+  }
+  50% {
+    transform: scale(1.13);
+    text-shadow: 0 2px 0 #b8801f, 0 0 18px rgba(255,223,128,0.95);
+  }
+}
+.label-pulse {
+  animation: dojo-label-pulse 1100ms ease-in-out infinite;
+}
+
+/* Intro: the dojo's name fading in on the title beat. */
+@keyframes dojo-title-in {
+  0%   { opacity: 0; transform: translateY(10px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+.dojo-title-in {
+  animation: dojo-title-in 900ms ease-out both;
+}
+
+/* Intro: the sensei walking into the dojo on the welcome beat. */
+@keyframes dojo-sensei-enter {
+  0%   { transform: translateX(-180%); opacity: 0; }
+  60%  { transform: translateX(6%); opacity: 1; }
+  100% { transform: translateX(0); opacity: 1; }
+}
+.sensei-entering {
+  animation: dojo-sensei-enter 1100ms ease-out both;
+}
+
+/* Fireworks burst on a step's success — particles fly out from a centre,
+   then fall and fade. The --dx / --dy come from each bit's inline style. */
+.firework-bit {
   position: absolute;
-  top: -8%;
-  border-radius: 2px;
-  animation-name: dojo-confetti;
-  animation-timing-function: ease-in;
+  top: 0;
+  left: 0;
+  width: 9px;
+  height: 9px;
+  border-radius: 99px;
+  opacity: 0;
+  animation-name: dojo-firework;
+  animation-duration: 1.3s;
+  animation-timing-function: ease-out;
   animation-fill-mode: forwards;
 }
-@keyframes dojo-confetti {
-  0%   { transform: translateY(0) rotate(0deg); opacity: 1; }
-  100% { transform: translateY(115vh) rotate(700deg); opacity: 0.85; }
+@keyframes dojo-firework {
+  0%   { transform: translate(0, 0) scale(0.35); opacity: 0; }
+  10%  { opacity: 1; }
+  55%  { transform: translate(var(--dx), var(--dy)) scale(1); opacity: 1; }
+  100% { transform: translate(calc(var(--dx) * 1.15), calc(var(--dy) * 1.15 + 90px)) scale(0.55); opacity: 0; }
 }

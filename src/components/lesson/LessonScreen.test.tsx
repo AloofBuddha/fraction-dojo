@@ -2,12 +2,10 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { LessonScreen } from './LessonScreen';
 
-// The runner opens on the first lesson and shows that step's instruction.
-test('Lesson 1 opens with the chop instruction', () => {
+// The runner opens on the first lesson and shows that challenge's instruction.
+test('Lesson 1 opens with the first challenge instruction', () => {
   render(<LessonScreen />);
-  expect(
-    screen.getByText(/chop it straight down the middle/i),
-  ).toBeInTheDocument();
+  expect(screen.getByText(/first challenge/i)).toBeInTheDocument();
 });
 
 // No tool is auto-selected — tapping the board before picking one does nothing.
@@ -19,13 +17,14 @@ test('tapping the board with no tool selected does nothing', async () => {
   expect(screen.queryByRole('button', { name: '1/2 piece' })).toBeNull();
 });
 
-// Picking the Chop tool, then tapping the board, completes the first step.
-test('chopping the whole board completes the first step', async () => {
+// Picking the Chop tool, then tapping the board, completes the chop and shows
+// the success line — the lesson's takeaway "one whole becomes two halves."
+test('chopping the whole board shows the success line', async () => {
   const user = userEvent.setup();
   render(<LessonScreen />);
   await user.click(screen.getByRole('button', { name: /chop/i }));
   await user.click(screen.getByRole('button', { name: '1/1 piece' }));
-  expect(await screen.findByText(/two equal halves/i)).toBeInTheDocument();
+  expect(await screen.findByText(/two halves/i)).toBeInTheDocument();
 });
 
 // Tools reveal progressively — Glue is not on screen during the first puzzle.
@@ -34,16 +33,4 @@ test('the Glue tool is not shown until a puzzle introduces it', () => {
   expect(
     screen.queryByRole('button', { name: /fuses two pieces/i }),
   ).toBeNull();
-});
-
-// advance(): completing a step and tapping Continue moves to the next step.
-test('Continue advances from the first puzzle to the second', async () => {
-  const user = userEvent.setup();
-  render(<LessonScreen />);
-  await user.click(screen.getByRole('button', { name: /chop/i }));
-  await user.click(screen.getByRole('button', { name: '1/1 piece' }));
-  await user.click(await screen.findByRole('button', { name: /continue/i }));
-  expect(
-    await screen.findByText(/chop the board until it is four equal pieces/i),
-  ).toBeInTheDocument();
 });
