@@ -24,7 +24,9 @@ import type { Step } from '@/core/lesson';
 import { fraction } from '@/core/fraction';
 import { BoardView } from './BoardView';
 import { QuestionPanel } from './QuestionPanel';
+import { Confetti } from './Confetti';
 import { canChopFurther } from './chop-limit';
+import { playSound } from './sound';
 import { LESSONS } from './lessons';
 import { ToolButton } from './ToolButton';
 import { Sensei } from './Sensei';
@@ -37,6 +39,10 @@ import '@/styles/dojo.css';
 
 const FIRST_STEP = LESSONS[0].steps[0];
 const INITIAL_BOARD = FIRST_STEP.kind === 'board' ? FIRST_STEP.startBoard : createBoard();
+
+// A beat after a completing move before the win is declared — lets the chop
+// or glue land before the celebration begins.
+const SETTLE_MS = 400;
 
 // Every tool introduced by a board step up to and including (lessonIndex,
 // stepIndex) — drives which tool buttons are on screen.
@@ -61,8 +67,9 @@ export function LessonScreen() {
   const [lessonIndex, setLessonIndex] = useState(0);
   const [stepIndex, setStepIndex] = useState(0);
   const [board, setBoard] = useState<Board>(INITIAL_BOARD);
-  const [tool, setTool] = useState<Tool>('chop');
+  const [tool, setTool] = useState<Tool | null>(null);
   const [celebrating, setCelebrating] = useState(false);
+  const [settling, setSettling] = useState(false);
   const [numInput, setNumInput] = useState('');
   const [denInput, setDenInput] = useState('');
   const [feedbackWrong, setFeedbackWrong] = useState(false);
@@ -73,21 +80,37 @@ export function LessonScreen() {
   const isQuestion = step?.kind === 'question';
   const revealed = revealedTools(lessonIndex, stepIndex);
 
-  // Apply a board change, then check whether it satisfies the current step.
-  const applyMove = (next: Board) => {
-    setBoard(next);
-    if (step?.kind === 'board' && step.isComplete(next)) setCelebrating(true);
+  // A step's goal is met — celebrate it, with a belt-up jingle on a belt's
+  // final step and a plain success chime otherwise.
+  const celebrate = () => {
+    setCelebrating(true);
+    const lastStep = !!lesson && stepIndex + 1 >= lesson.steps.length;
+    playSound(lastStep ? 'beltUp' : 'success');
   };
 
-  // Set up the board / tool for a step the runner is about to show.
+  // Apply a board change. If it completes the step, let the board settle for
+  // a beat before declaring the win — so the chop or glue lands first.
+  const applyMove = (next: Board) => {
+    setBoard(next);
+    if (step?.kind === 'board' && step.isComplete(next)) {
+      setSettling(true);
+      window.setTimeout(() => {
+        setSettling(false);
+        celebrate();
+      }, SETTLE_MS);
+    }
+  };
+
+  // Set up the board for a step the runner is about to show. No tool is
+  // auto-selected — the student picks one.
   const enterStep = (next: Step) => {
     setBoard(stepBoard(next));
-    setTool(next.kind === 'board' ? next.allowedTools[0] : 'chop');
   };
 
   // Tap Continue once a step is done — move to the next step / lesson.
   const advance = () => {
     if (!lesson) return;
+    playSound('continue');
     if (stepIndex + 1 < lesson.steps.length) {
       setStepIndex(stepIndex + 1);
       enterStep(lesson.steps[stepIndex + 1]);
@@ -116,9 +139,10 @@ export function LessonScreen() {
       num >= 0 &&
       den > 0;
     if (valid && step.isCorrect(fraction(num, den))) {
-      setCelebrating(true);
+      celebrate();
     } else {
       setFeedbackWrong(true);
+      playSound('wrong');
     }
   };
 
@@ -135,7 +159,7 @@ export function LessonScreen() {
   // Which tools are usable now — a board step's allowed set, or, on a question
   // scratchpad, every tool learned so far.
   const toolAllowed = (t: Tool) => {
-    if (!step || celebrating) return false;
+    if (!step || celebrating || settling) return false;
     return step.kind === 'board' ? step.allowedTools.includes(t) : revealed.has(t);
   };
   const chopLimit = step?.kind === 'board' ? step.maxDenominator : undefined;
@@ -145,19 +169,42 @@ export function LessonScreen() {
   const simplifyEnabled =
     toolAllowed('simplify') && board.pieces.some((p) => canSimplify(board, p.id));
 
+  // The tool BoardView reflects — the selected one only if it's usable now;
+  // otherwise the board shows no affordances and a tool must be picked.
+  const activeTool: Tool | null = tool && toolAllowed(tool) ? tool : null;
+
+  // Picking a tool — nothing is auto-selected; the student chooses.
+  const selectTool = (t: Tool) => {
+    setTool(t);
+    playSound('select');
+  };
+
   const handlePieceTap = (id: string) => {
+    if (settling) return;
     const piece = findPiece(board, id);
-    if (!piece || piece.locked) return;
+    if (!piece) return;
+    if (piece.locked) {
+      playSound('wrong'); // the stone master cannot be cut
+      return;
+    }
     if (tool === 'chop' && chopEnabled && canChopFurther(piece.value, chopLimit)) {
+      playSound('chop');
       applyMove(chop(board, id));
     } else if (tool === 'simplify' && simplifyEnabled && canSimplify(board, id)) {
+      playSound('simplify');
       applyMove(simplify(board, id));
+    } else {
+      playSound('wrong'); // the tap produced no move — nudge the student
     }
   };
 
   const handleGlue = (idA: string, idB: string) => {
+    if (settling) return;
     if (glueEnabled && canGlue(board, idA, idB)) {
+      playSound('glue');
       applyMove(glue(board, idA, idB));
+    } else {
+      playSound('wrong');
     }
   };
 
@@ -181,6 +228,7 @@ export function LessonScreen() {
     <div className="stage">
       <div className="frame">
         <DojoBackground />
+        {celebrating && <Confetti />}
 
         {/* top bar — pause left, belt + lesson title centered */}
         <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 112, zIndex: 5 }}>
@@ -279,7 +327,11 @@ export function LessonScreen() {
                 pointerEvents: 'none',
               }}
             >
-              <Sensei mood="happy" talking />
+              <Sensei
+                mood={celebrating ? 'cheer' : 'happy'}
+                celebrating={celebrating}
+                talking
+              />
             </div>
           </div>
 
@@ -291,12 +343,12 @@ export function LessonScreen() {
                 flexDirection: 'column',
                 alignItems: 'center',
                 gap: 14,
-                width: 'min(100%, calc(100svh - 220px))',
+                width: 'min(100%, calc(100svh - 280px))',
               }}
             >
               <BoardView
                 board={board}
-                tool={tool}
+                tool={activeTool}
                 chopLimit={chopLimit}
                 onPieceTap={handlePieceTap}
                 onGlue={handleGlue}
@@ -304,7 +356,10 @@ export function LessonScreen() {
               {!celebrating && step && (
                 <button
                   type="button"
-                  onClick={() => setBoard(stepBoard(step))}
+                  onClick={() => {
+                    setBoard(stepBoard(step));
+                    playSound('reset');
+                  }}
                   style={{
                     padding: '8px 18px',
                     borderRadius: 999,
@@ -362,7 +417,7 @@ export function LessonScreen() {
                   hint="Splits a piece in two"
                   active={tool === 'chop'}
                   disabled={!chopEnabled}
-                  onClick={() => setTool('chop')}
+                  onClick={() => selectTool('chop')}
                 >
                   <IconChop size={48} />
                 </ToolButton>
@@ -375,7 +430,7 @@ export function LessonScreen() {
                   accent="#f3b13a"
                   active={tool === 'glue'}
                   disabled={!glueEnabled}
-                  onClick={() => setTool('glue')}
+                  onClick={() => selectTool('glue')}
                 >
                   <IconGlue size={48} />
                 </ToolButton>
@@ -388,7 +443,7 @@ export function LessonScreen() {
                   accent="#5fb24a"
                   active={tool === 'simplify'}
                   disabled={!simplifyEnabled}
-                  onClick={() => setTool('simplify')}
+                  onClick={() => selectTool('simplify')}
                 >
                   <IconSimplify size={44} />
                 </ToolButton>

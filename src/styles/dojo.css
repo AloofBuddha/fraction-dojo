@@ -108,3 +108,27 @@ body {
   25%  { opacity: 1; }
   100% { opacity: 0; }
 }
+
+/* The sensei's happy hop while a step's success is being celebrated. */
+@keyframes dojo-cheer {
+  0%, 100% { transform: translateY(0) rotate(-2deg); }
+  50%      { transform: translateY(-14px) rotate(2deg); }
+}
+.sensei-cheer {
+  animation: dojo-cheer 700ms ease-in-out infinite;
+  transform-origin: 50% 100%;
+}
+
+/* One-shot confetti burst on a step's success. */
+.confetti-bit {
+  position: absolute;
+  top: -8%;
+  border-radius: 2px;
+  animation-name: dojo-confetti;
+  animation-timing-function: ease-in;
+  animation-fill-mode: forwards;
+}
+@keyframes dojo-confetti {
+  0%   { transform: translateY(0) rotate(0deg); opacity: 1; }
+  100% { transform: translateY(115vh) rotate(700deg); opacity: 0.85; }
+}

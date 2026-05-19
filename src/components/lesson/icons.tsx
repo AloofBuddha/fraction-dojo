@@ -1,7 +1,7 @@
 /* Icons for the lesson chrome.
  *
- * The chop and glue tool icons render the PNG art in `public/assets/` — bold,
- * flat, and consistent with each other. Pause and mic are small inline SVGs. */
+ * The chop and glue tool icons render the PNG art in `public/assets/icons/` —
+ * bold, flat, consistent. Pause and mic are small inline SVGs. */
 
 interface IconProps {
   size?: number;
@@ -11,7 +11,7 @@ interface IconProps {
 export function IconChop({ size = 52 }: IconProps) {
   return (
     <img
-      src="/assets/chop.png"
+      src="/assets/icons/chop.png"
       alt=""
       style={{ width: size, height: 'auto', display: 'block' }}
     />
@@ -22,7 +22,7 @@ export function IconChop({ size = 52 }: IconProps) {
 export function IconGlue({ size = 52 }: IconProps) {
   return (
     <img
-      src="/assets/glue.png"
+      src="/assets/icons/glue.png"
       alt=""
       style={{ width: size, height: 'auto', display: 'block' }}
     />
@@ -30,7 +30,7 @@ export function IconGlue({ size = 52 }: IconProps) {
 }
 
 /** The simplify tool icon — a "reduce" double-chevron. Placeholder until a
- *  matching PNG (like chop/glue) is dropped into public/assets/. */
+ *  matching PNG (like chop/glue) is dropped into public/assets/icons/. */
 export function IconSimplify({ size = 46 }: IconProps) {
   return (
     <svg viewBox="0 0 100 100" width={size} height={size} aria-hidden>

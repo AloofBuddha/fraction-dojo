@@ -41,7 +41,7 @@ interface PieceViewProps {
   numerator: number;
   denominator: number;
   rect: Rect;
-  tool: Tool;
+  tool: Tool | null;
   locked: boolean;
   chopLimit?: number;
   onTap: (id: string) => void;
@@ -313,7 +313,8 @@ function ChopFx({ fx, onDone }: { fx: ChopFxState; onDone: () => void }) {
 
 interface BoardViewProps {
   board: Board;
-  tool: Tool;
+  /** The active tool, or null when the student has not picked one. */
+  tool: Tool | null;
   /** Tightest denominator the chop tool may reach (puzzle-specific). */
   chopLimit?: number;
   onPieceTap: (id: string) => void;

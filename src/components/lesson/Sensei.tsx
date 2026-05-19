@@ -8,9 +8,11 @@ export type SenseiMood = 'happy' | 'cheer' | 'think' | 'wow';
 interface SenseiProps {
   mood?: SenseiMood;
   talking?: boolean;
+  /** When true, the sensei does a happy hop — used on a step's success. */
+  celebrating?: boolean;
 }
 
-export function Sensei({ mood = 'happy', talking = true }: SenseiProps) {
+export function Sensei({ mood = 'happy', talking = true, celebrating = false }: SenseiProps) {
   const eyeKind = useMemo(() => {
     switch (mood) {
       case 'cheer':
@@ -73,7 +75,14 @@ export function Sensei({ mood = 'happy', talking = true }: SenseiProps) {
     );
 
   return (
-    <svg viewBox="0 0 400 520" width="100%" height="100%" style={{ overflow: 'visible' }} aria-hidden>
+    <svg
+      viewBox="0 0 400 520"
+      width="100%"
+      height="100%"
+      className={celebrating ? 'sensei-cheer' : undefined}
+      style={{ overflow: 'visible' }}
+      aria-hidden
+    >
       <defs>
         <linearGradient id="senseiGi" x1="0" y1="0" x2="0" y2="1">
           <stop offset="0%" stopColor="#fdf3da" />

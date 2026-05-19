@@ -41,10 +41,13 @@ Ordered by priority — tick a box when done.
 - [ ] **Progressive tools** — reveal a tool only once a lesson has taught it.
 
 ### 2 · Audio-visual polish (make it feel good)
-- [ ] **Visual juice** — chop particles, glue sparkle, simplify shimmer,
-      step-success and belt-up celebrations.
-- [ ] **Sound effects** — chop, glue, simplify, success, belt-up.
-- [ ] **Sensei expressions** — poses / expressions that react to the lesson.
+- [ ] **Visual juice** — step-success / belt-up confetti **done**; still want
+      chop particles, glue sparkle, simplify shimmer, board-tap burst.
+- [x] **Sound effects** — Web Audio synthesis; one uniquely-named effect each
+      for chop / glue / simplify / success / wrong / belt-up, replaceable with
+      real recordings one at a time.
+- [x] **Sensei animation** — idle head-bob plus a happy hop on each success
+      (the existing art animated in code; new poses not feasible).
 
 ### 3 · Intro & onboarding
 - [ ] **Intro screen** — a game-style start that collects name + pronoun
