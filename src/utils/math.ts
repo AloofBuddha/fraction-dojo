@@ -17,3 +17,11 @@ export function gcd(a: number, b: number): number {
   }
   return dividend;
 }
+
+/**
+ * True when two numbers are equal within a small tolerance — for comparing
+ * floating-point coordinates without exact-equality surprises.
+ */
+export function approxEqual(a: number, b: number, epsilon = 1e-9): boolean {
+  return Math.abs(a - b) < epsilon;
+}

@@ -4,7 +4,6 @@ import {
   simplify,
   areEquivalent,
   add,
-  split,
   format,
 } from './fraction';
 
@@ -85,27 +84,6 @@ describe('add()', () => {
 
   it('treats 0/1 as the identity', () => {
     expect(add(fraction(0, 1), fraction(3, 8))).toEqual(fraction(3, 8));
-  });
-});
-
-describe('split()', () => {
-  it('halves a fraction when split into 2 — the chop operation', () => {
-    expect(split(fraction(1, 1), 2)).toEqual(fraction(1, 2));
-    expect(split(fraction(1, 2), 2)).toEqual(fraction(1, 4));
-  });
-
-  it('splits into more than two equal parts', () => {
-    expect(split(fraction(1, 1), 3)).toEqual(fraction(1, 3));
-  });
-
-  it('conserves the amount — the parts of a split add back up', () => {
-    // Splitting 1/2 into 2 gives parts worth 1/4; the two parts re-add to 1/2.
-    const part = split(fraction(1, 2), 2);
-    expect(areEquivalent(add(part, part), fraction(1, 2))).toBe(true);
-  });
-
-  it('rejects a non-positive split count', () => {
-    expect(() => split(fraction(1, 1), 0)).toThrow();
   });
 });
 

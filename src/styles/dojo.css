@@ -1,0 +1,110 @@
+/* Fraction Dojo — board manipulative + dojo styles.
+ * Ported from the Claude Design handoff (claude.ai/design).
+ *
+ * Tablet-first: no interaction depends on :hover (touch has none). The :hover
+ * brightness below is a harmless mouse-only enhancement, never relied upon. */
+
+@import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap');
+
+:root {
+  /* Piece colors — by denominator, Cuisenaire-rod logic: same size, same color. */
+  --p-1:    #d2a273;  --p-1-d:  #a87543;
+  --p-2:    #e85f4e;  --p-2-d:  #ad3a2c;
+  --p-4:    #f3b13a;  --p-4-d:  #b8801f;
+  --p-8:    #7ab560;  --p-8-d:  #4f853c;
+  --p-16:   #5ba5d9;  --p-16-d: #2f6f9e;
+  --p-32:   #a586d4;  --p-32-d: #6f55a0;
+  --p-64:   #e87fb4;  --p-64-d: #b14e82;
+
+  /* Tatami floor */
+  --tatami:        #d8b878;
+  --tatami-deep:   #b78f4d;
+  --tatami-stripe: #caa063;
+}
+
+/* The lesson is a fixed 1366x900 stage, scaled to fit the viewport. */
+html,
+body {
+  overflow: hidden;
+}
+
+.stage {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(ellipse at top, #2c211a 0%, #160f0b 60%, #0a0705 100%);
+}
+
+/* The frame fills the whole viewport — no letterboxing. */
+.frame {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.tatami-pattern {
+  background: repeating-linear-gradient(
+    90deg,
+    var(--tatami) 0px,
+    var(--tatami) 110px,
+    var(--tatami-stripe) 110px,
+    var(--tatami-stripe) 112px,
+    var(--tatami) 112px,
+    var(--tatami) 222px,
+    var(--tatami-deep) 222px,
+    var(--tatami-deep) 224px
+  );
+}
+
+.piece {
+  transition: transform 120ms ease, filter 120ms ease;
+}
+.piece:hover {
+  filter: brightness(1.06);
+}
+
+/* Chop preview — the dashed cut-line, shown while hovering a choppable piece.
+   Hover is a bonus, not relied on: tapping a piece chops it regardless. */
+.chop-line {
+  opacity: 0;
+  transition: opacity 120ms ease;
+}
+.piece:hover .chop-line {
+  opacity: 1;
+}
+
+/* The glue seam's pulsing glow — always visible, so glue needs no hover. */
+.pulse-glow {
+  animation: dojo-pulse 1400ms ease-in-out infinite;
+}
+
+@keyframes dojo-bob {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-6px); }
+}
+.bob {
+  animation: dojo-bob 3200ms ease-in-out infinite;
+}
+
+@keyframes dojo-pulse {
+  0%, 100% { opacity: 0.5; }
+  50%      { opacity: 1; }
+}
+
+@keyframes dojo-wiggle {
+  0%, 100% { transform: rotate(0deg); }
+  25%      { transform: rotate(-2deg); }
+  75%      { transform: rotate(2deg); }
+}
+.tool-active {
+  animation: dojo-wiggle 900ms ease-in-out infinite;
+}
+
+@keyframes dojo-chop-flash {
+  0%   { opacity: 0; }
+  25%  { opacity: 1; }
+  100% { opacity: 0; }
+}

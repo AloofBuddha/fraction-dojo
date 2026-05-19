@@ -40,8 +40,8 @@ export function fraction(numerator: number, denominator: number): Fraction {
 /**
  * The decimal value of a fraction, e.g. 1/2 → 0.5.
  *
- * For rendering only (e.g. a piece's pixel width). Never use this to compare
- * fractions — use `areEquivalent` instead, which is exact.
+ * For when a real number is genuinely needed (summing values, layout math).
+ * Never use it to *compare* fractions — use `areEquivalent`, which is exact.
  */
 export function toValue(f: Fraction): number {
   return f.numerator / f.denominator;
@@ -87,17 +87,6 @@ export function add(a: Fraction, b: Fraction): Fraction {
     numerator: a.numerator * b.denominator + b.numerator * a.denominator,
     denominator: a.denominator * b.denominator,
   });
-}
-
-/**
- * The size of one part when a fraction is split into `parts` equal pieces, e.g.
- * splitting 1/2 into 2 gives 1/4. This is what a "chop" does to a board piece.
- */
-export function split(f: Fraction, parts: number): Fraction {
-  if (!Number.isInteger(parts) || parts < 1) {
-    throw new Error(`split() expects a positive integer, got ${parts}`);
-  }
-  return { numerator: f.numerator, denominator: f.denominator * parts };
 }
 
 /** Human-readable form, e.g. "1/2". */

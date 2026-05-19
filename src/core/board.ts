@@ -1,147 +1,172 @@
 /**
- * The board manipulative: a wooden board (the whole, worth 1) that the student
- * chops into equal pieces and mends back together.
+ * The board manipulative — a wooden board (= 1 whole) tiled by rectangular
+ * pieces. A piece's `value` is its share of the whole; its numerator may be
+ * greater than 1 (e.g. a 2/4 piece glued from two 1/4s).
  *
- * The board is a tree of pieces. All operations are pure functions that return a
- * new `Board` — nothing is mutated — which keeps the model easy to test, to undo,
- * and to drive from React state.
+ * Three operations, each a pure function returning a new `Board`:
+ *  - chop     — split a piece into two equal halves
+ *  - glue     — merge two adjacent same-denominator pieces (numerators add)
+ *  - simplify — reduce a piece's fraction one halving step (2/4 → 1/2)
+ *
+ * Rectangle geometry lives in ./rect; this module is the model on top of it.
+ * Framework-agnostic (no React, no DOM) and unit-testable.
  */
 
-import { type Fraction, fraction, split } from './fraction';
+import { type Fraction, fraction } from './fraction';
+import { type Rect, splitRect, unionRect } from './rect';
 
-/**
- * One rectangular region of the board. A piece is a leaf (no children) until it
- * is chopped, after which it has equal children. `value` is the piece's share of
- * the whole board.
- *
- * `id` is path-based and deterministic: the root is `"r"`, and the i-th child of
- * a piece is `"<parentId>.<i>"` (e.g. `"r.0"`, `"r.0.1"`). Deterministic ids make
- * the board easy to address from the UI and to assert on in tests, with no
- * separate id generator to thread through.
- */
+export type { Rect } from './rect';
+
 export interface Piece {
   readonly id: string;
   readonly value: Fraction;
-  readonly children: readonly Piece[];
+  readonly rect: Rect;
 }
 
 export interface Board {
-  readonly root: Piece;
+  readonly pieces: readonly Piece[];
 }
 
-/** A karate chop always halves a board. */
-const CHOP_PARTS = 2;
-const ROOT_ID = 'r';
+/**
+ * A piece's id is derived from its rect. Pieces always tile the board, so no
+ * two share a rect — the id is therefore unique and fully deterministic, with
+ * no id generator to thread through (handy for tests and React keys).
+ */
+function rectId(rect: Rect): string {
+  return `${rect.x}:${rect.y}:${rect.w}:${rect.h}`;
+}
+
+function makePiece(value: Fraction, rect: Rect): Piece {
+  return { id: rectId(rect), value, rect };
+}
 
 /** A fresh board: a single whole piece worth 1. */
 export function createBoard(): Board {
-  return { root: { id: ROOT_ID, value: fraction(1, 1), children: [] } };
+  return { pieces: [makePiece(fraction(1, 1), { x: 0, y: 0, w: 1, h: 1 })] };
 }
 
-function isLeaf(piece: Piece): boolean {
-  return piece.children.length === 0;
-}
-
-/** Visit every piece in the board, depth-first from the root. */
-function walkBoard(board: Board, visit: (piece: Piece) => void): void {
-  const visitPiece = (piece: Piece): void => {
-    visit(piece);
-    for (const child of piece.children) {
-      visitPiece(child);
-    }
-  };
-  visitPiece(board.root);
-}
-
-/** Find a piece anywhere in the tree by id, or `undefined` if there is none. */
+/** Find a piece by id, or `undefined` if there is none. */
 export function findPiece(board: Board, id: string): Piece | undefined {
-  let match: Piece | undefined;
-  walkBoard(board, (piece) => {
-    if (piece.id === id) {
-      match = piece;
-    }
-  });
-  return match;
+  return board.pieces.find((piece) => piece.id === id);
 }
 
-/** Every leaf piece — the cells currently visible on the board. */
-export function leaves(board: Board): Piece[] {
-  const result: Piece[] = [];
-  walkBoard(board, (piece) => {
-    if (isLeaf(piece)) {
-      result.push(piece);
-    }
-  });
-  return result;
-}
+/* ─── chop ───────────────────────────────────────────────────────────── */
 
-/** Rebuild the tree, replacing the piece with `id` via `transform`. */
-function replacePiece(
-  piece: Piece,
-  id: string,
-  transform: (target: Piece) => Piece,
-): Piece {
-  if (piece.id === id) {
-    return transform(piece);
-  }
-  if (isLeaf(piece)) {
-    return piece;
-  }
-  return {
-    ...piece,
-    children: piece.children.map((child) => replacePiece(child, id, transform)),
-  };
-}
-
-/** A piece can be chopped only if it exists and is a leaf. */
-export function canChop(board: Board, id: string): boolean {
-  const piece = findPiece(board, id);
-  return piece !== undefined && isLeaf(piece);
+/**
+ * Half of a fraction, in the smallest denominator: halve the numerator if it
+ * is even, otherwise double the denominator. So 2/4 → 1/4, but 1/4 → 1/8.
+ */
+export function halfValue(value: Fraction): Fraction {
+  return value.numerator % 2 === 0
+    ? fraction(value.numerator / 2, value.denominator)
+    : fraction(value.numerator, value.denominator * 2);
 }
 
 /**
- * Chop a leaf piece into two equal halves — the core karate-chop move.
- * Throws if the piece does not exist or is not a leaf; check `canChop` first.
+ * Chop a piece into two equal halves — split along its longer side so the
+ * pieces stay roughly square. Throws if the piece does not exist.
  */
 export function chop(board: Board, id: string): Board {
-  if (!canChop(board, id)) {
-    throw new Error(`chop(): "${id}" is not a choppable leaf piece`);
+  const piece = findPiece(board, id);
+  if (!piece) {
+    throw new Error(`chop(): no piece "${id}"`);
   }
+  const childValue = halfValue(piece.value);
   return {
-    root: replacePiece(board.root, id, (piece) => {
-      const childValue = split(piece.value, CHOP_PARTS);
-      const children: Piece[] = [];
-      for (let index = 0; index < CHOP_PARTS; index++) {
-        children.push({
-          id: `${piece.id}.${index}`,
-          value: childValue,
-          children: [],
-        });
-      }
-      return { ...piece, children };
-    }),
+    pieces: [
+      ...board.pieces.filter((p) => p.id !== id),
+      ...splitRect(piece.rect).map((rect) => makePiece(childValue, rect)),
+    ],
   };
 }
 
+/* ─── glue ───────────────────────────────────────────────────────────── */
+
 /**
- * A piece can be mended only if it has children and all of them are leaves —
- * i.e. it was chopped exactly once and not chopped any deeper. Mend the deepest
- * pieces first to collapse a board step by step.
+ * Two pieces can be glued when they share a denominator and their rects union
+ * into a rectangle — keeping the board a tidy tiling.
+ *
+ * Same-denominator is an MVP rule of thumb; a later lesson engine may want a
+ * value- or rule-based gate instead.
  */
-export function canMend(board: Board, id: string): boolean {
-  const piece = findPiece(board, id);
-  return piece !== undefined && !isLeaf(piece) && piece.children.every(isLeaf);
+export function canGlue(board: Board, idA: string, idB: string): boolean {
+  if (idA === idB) return false;
+  const a = findPiece(board, idA);
+  const b = findPiece(board, idB);
+  if (!a || !b) return false;
+  if (a.value.denominator !== b.value.denominator) return false;
+  return unionRect(a.rect, b.rect) !== undefined;
 }
 
 /**
- * Mend a chopped piece back into a whole leaf — the band-aid move, the inverse
- * of `chop`. Throws if the piece cannot be mended; check `canMend` first.
+ * Glue two pieces into one — their numerators add, the denominator is kept
+ * (1/4 + 1/4 → 2/4). Throws if they cannot be glued; check `canGlue` first.
  */
-export function mend(board: Board, id: string): Board {
-  if (!canMend(board, id)) {
-    throw new Error(`mend(): "${id}" is not a mendable piece`);
+export function glue(board: Board, idA: string, idB: string): Board {
+  const a = findPiece(board, idA);
+  const b = findPiece(board, idB);
+  const rect =
+    a && b && a.value.denominator === b.value.denominator
+      ? unionRect(a.rect, b.rect)
+      : undefined;
+  if (!a || !b || !rect) {
+    throw new Error(`glue(): "${idA}" and "${idB}" cannot be glued`);
   }
+  const merged = makePiece(
+    fraction(a.value.numerator + b.value.numerator, a.value.denominator),
+    rect,
+  );
   return {
-    root: replacePiece(board.root, id, (piece) => ({ ...piece, children: [] })),
+    pieces: [
+      ...board.pieces.filter((p) => p.id !== idA && p.id !== idB),
+      merged,
+    ],
+  };
+}
+
+/** Every pair of pieces that can currently be glued — used to place the seams. */
+export function gluablePairs(board: Board): [string, string][] {
+  const pairs: [string, string][] = [];
+  const { pieces } = board;
+  for (let i = 0; i < pieces.length; i++) {
+    for (let j = i + 1; j < pieces.length; j++) {
+      if (canGlue(board, pieces[i].id, pieces[j].id)) {
+        pairs.push([pieces[i].id, pieces[j].id]);
+      }
+    }
+  }
+  return pairs;
+}
+
+/* ─── simplify ───────────────────────────────────────────────────────── */
+
+/**
+ * A piece can be simplified when its numerator and denominator are both even
+ * (2/4, 8/8) — one halving step reduces it.
+ */
+export function canSimplify(board: Board, id: string): boolean {
+  const piece = findPiece(board, id);
+  if (!piece) return false;
+  return piece.value.numerator % 2 === 0 && piece.value.denominator % 2 === 0;
+}
+
+/**
+ * Reduce a piece's fraction by one halving step — 2/4 → 1/2, 8/8 → 4/4. The
+ * piece keeps its exact size and position; only its value (and colour) change,
+ * which is what makes equivalence visible. Throws if it cannot be simplified.
+ */
+export function simplify(board: Board, id: string): Board {
+  const piece = findPiece(board, id);
+  if (!piece || !canSimplify(board, id)) {
+    throw new Error(`simplify(): "${id}" cannot be simplified`);
+  }
+  const reduced = fraction(
+    piece.value.numerator / 2,
+    piece.value.denominator / 2,
+  );
+  return {
+    pieces: board.pieces.map((p) =>
+      p.id === id ? makePiece(reduced, p.rect) : p,
+    ),
   };
 }
