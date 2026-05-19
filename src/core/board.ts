@@ -21,11 +21,16 @@ export interface Piece {
   readonly id: string;
   readonly value: Fraction;
   readonly rect: Rect;
+  /** A locked piece is a puzzle's fixed reference — inert to every tool. */
+  readonly locked?: boolean;
 }
 
 export interface Board {
   readonly pieces: readonly Piece[];
 }
+
+/** The three operations a student can apply to a piece on the board. */
+export type Tool = 'chop' | 'glue' | 'simplify';
 
 /**
  * A piece's id is derived from its rect. Pieces always tile the board, so no
@@ -50,6 +55,18 @@ export function findPiece(board: Board, id: string): Piece | undefined {
   return board.pieces.find((piece) => piece.id === id);
 }
 
+/**
+ * Mark a piece as locked. A locked piece is a puzzle's fixed reference — it
+ * cannot be chopped, glued, or simplified, so the student must match it.
+ */
+export function lockPiece(board: Board, id: string): Board {
+  return {
+    pieces: board.pieces.map((piece) =>
+      piece.id === id ? { ...piece, locked: true } : piece,
+    ),
+  };
+}
+
 /* ─── chop ───────────────────────────────────────────────────────────── */
 
 /**
@@ -70,6 +87,9 @@ export function chop(board: Board, id: string): Board {
   const piece = findPiece(board, id);
   if (!piece) {
     throw new Error(`chop(): no piece "${id}"`);
+  }
+  if (piece.locked) {
+    throw new Error(`chop(): piece "${id}" is locked`);
   }
   const childValue = halfValue(piece.value);
   return {
@@ -94,6 +114,7 @@ export function canGlue(board: Board, idA: string, idB: string): boolean {
   const a = findPiece(board, idA);
   const b = findPiece(board, idB);
   if (!a || !b) return false;
+  if (a.locked || b.locked) return false;
   if (a.value.denominator !== b.value.denominator) return false;
   return unionRect(a.rect, b.rect) !== undefined;
 }
@@ -106,7 +127,7 @@ export function glue(board: Board, idA: string, idB: string): Board {
   const a = findPiece(board, idA);
   const b = findPiece(board, idB);
   const rect =
-    a && b && a.value.denominator === b.value.denominator
+    a && b && !a.locked && !b.locked && a.value.denominator === b.value.denominator
       ? unionRect(a.rect, b.rect)
       : undefined;
   if (!a || !b || !rect) {
@@ -146,7 +167,7 @@ export function gluablePairs(board: Board): [string, string][] {
  */
 export function canSimplify(board: Board, id: string): boolean {
   const piece = findPiece(board, id);
-  if (!piece) return false;
+  if (!piece || piece.locked) return false;
   return piece.value.numerator % 2 === 0 && piece.value.denominator % 2 === 0;
 }
 
@@ -164,9 +185,9 @@ export function simplify(board: Board, id: string): Board {
     piece.value.numerator / 2,
     piece.value.denominator / 2,
   );
+  // Spread the original piece so every field (id, rect, locked) is preserved
+  // — only the value changes.
   return {
-    pieces: board.pieces.map((p) =>
-      p.id === id ? makePiece(reduced, p.rect) : p,
-    ),
+    pieces: board.pieces.map((p) => (p.id === id ? { ...p, value: reduced } : p)),
   };
 }

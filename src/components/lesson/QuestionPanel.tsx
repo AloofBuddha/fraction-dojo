@@ -1,0 +1,91 @@
+/* The answer input for a question step — a compact [ ]/[ ] fraction the
+ * student fills in beneath the sensei's question. The board stays on screen
+ * as a scratchpad, so this panel only carries the answer. */
+
+import type { CSSProperties, KeyboardEvent } from 'react';
+
+interface QuestionPanelProps {
+  numerator: string;
+  denominator: string;
+  onNumerator: (value: string) => void;
+  onDenominator: (value: string) => void;
+  onSubmit: () => void;
+}
+
+const boxStyle: CSSProperties = {
+  width: 76,
+  height: 64,
+  borderRadius: 12,
+  border: '3px solid #1f1712',
+  background: '#fff',
+  textAlign: 'center',
+  fontFamily: 'Fredoka, system-ui, sans-serif',
+  fontWeight: 700,
+  fontSize: 34,
+  color: '#1f1712',
+};
+
+export function QuestionPanel({
+  numerator,
+  denominator,
+  onNumerator,
+  onDenominator,
+  onSubmit,
+}: QuestionPanelProps) {
+  const onKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === 'Enter') onSubmit();
+  };
+
+  return (
+    <div
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: 18,
+        padding: '16px 22px',
+        borderRadius: 20,
+        background: 'linear-gradient(180deg, #fdf6e2 0%, #f5e7c0 100%)',
+        border: '3px solid #1f1712',
+        boxShadow: '0 0 0 3px #d8453d, 0 8px 16px rgba(0,0,0,0.22)',
+      }}
+    >
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
+        <input
+          aria-label="numerator"
+          inputMode="numeric"
+          value={numerator}
+          onChange={(event) => onNumerator(event.target.value)}
+          onKeyDown={onKeyDown}
+          style={boxStyle}
+        />
+        <div style={{ width: 84, height: 7, borderRadius: 99, background: '#1f1712' }} />
+        <input
+          aria-label="denominator"
+          inputMode="numeric"
+          value={denominator}
+          onChange={(event) => onDenominator(event.target.value)}
+          onKeyDown={onKeyDown}
+          style={boxStyle}
+        />
+      </div>
+      <button
+        type="button"
+        onClick={onSubmit}
+        style={{
+          padding: '12px 24px',
+          borderRadius: 999,
+          border: '3px solid #1f1712',
+          background: 'linear-gradient(180deg, #ef6f5a, #d8453d)',
+          color: '#fff',
+          fontFamily: 'Fredoka, system-ui, sans-serif',
+          fontWeight: 700,
+          fontSize: 18,
+          cursor: 'pointer',
+          boxShadow: '0 4px 0 #1f1712',
+        }}
+      >
+        Check
+      </button>
+    </div>
+  );
+}

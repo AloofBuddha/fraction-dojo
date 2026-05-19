@@ -43,15 +43,18 @@ export function ToolButton({
         padding: '14px 8px 16px',
         borderRadius: 20,
         fontFamily: 'Fredoka, system-ui, sans-serif',
-        background: active
-          ? 'linear-gradient(180deg, #fff3c8 0%, #f1d177 100%)'
-          : 'linear-gradient(180deg, #f6ecd6 0%, #e3cea0 100%)',
-        boxShadow: active
-          ? `0 0 0 4px ${accent}, 0 0 0 7px #1f1712, 0 8px 0 #1f1712, 0 0 26px rgba(216, 69, 61, 0.55)`
-          : '0 0 0 3px #1f1712, 0 6px 0 #1f1712, 0 10px 18px rgba(0,0,0,0.25)',
+        background: disabled
+          ? 'linear-gradient(180deg, #c8c2b2 0%, #aaa493 100%)'
+          : active
+            ? 'linear-gradient(180deg, #fff3c8 0%, #f1d177 100%)'
+            : 'linear-gradient(180deg, #f6ecd6 0%, #e3cea0 100%)',
+        boxShadow: disabled
+          ? '0 0 0 3px #6f6a5e, 0 5px 0 #6f6a5e, 0 8px 14px rgba(0,0,0,0.22)'
+          : active
+            ? `0 0 0 4px ${accent}, 0 0 0 7px #1f1712, 0 8px 0 #1f1712, 0 0 26px rgba(216, 69, 61, 0.55)`
+            : '0 0 0 3px #1f1712, 0 6px 0 #1f1712, 0 10px 18px rgba(0,0,0,0.25)',
         transition: 'transform 80ms ease, box-shadow 120ms ease',
         cursor: disabled ? 'not-allowed' : 'pointer',
-        opacity: disabled ? 0.55 : 1,
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
@@ -59,17 +62,27 @@ export function ToolButton({
       }}
     >
       <div
-        className={active ? 'tool-active' : undefined}
+        className={active && !disabled ? 'tool-active' : undefined}
         style={{
-          background: '#fff',
+          background: disabled ? '#e7e4db' : '#fff',
           borderRadius: 16,
           padding: 6,
-          boxShadow: 'inset 0 0 0 3px #1f1712, 0 3px 0 rgba(0,0,0,0.18)',
+          boxShadow: disabled
+            ? 'inset 0 0 0 3px #6f6a5e'
+            : 'inset 0 0 0 3px #1f1712, 0 3px 0 rgba(0,0,0,0.18)',
+          filter: disabled ? 'grayscale(0.9)' : 'none',
         }}
       >
         {children}
       </div>
-      <div style={{ fontWeight: 700, fontSize: 18, color: '#1f1712', letterSpacing: 0.3 }}>
+      <div
+        style={{
+          fontWeight: 700,
+          fontSize: 18,
+          color: disabled ? '#6f6a5e' : '#1f1712',
+          letterSpacing: 0.3,
+        }}
+      >
         {label}
       </div>
       {hint && (
@@ -86,7 +99,7 @@ export function ToolButton({
           {hint}
         </div>
       )}
-      {active && (
+      {active && !disabled && (
         <div
           style={{
             position: 'absolute',

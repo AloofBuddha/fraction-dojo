@@ -1,46 +1,61 @@
 # Fraction Dojo — Sprint Plan
 
-A 1-week challenge cloning Synthesis Tutor: a voice-first, karate-themed math game
-that teaches **fraction equivalence** (1/2 = 2/4 = 4/8). The whole is a wooden
-**board**; a karate **chop** halves it, a **band-aid** mends it, an animated
-**sensei** tutors, and completing the lesson earns a **belt**.
+A 1-week challenge cloning Synthesis Tutor: a karate-themed math game that
+teaches **fraction equivalence** (1/2 = 2/4 = 4/8). The whole is a wooden
+**board**; three tools reshape it — **Chop** halves a piece, **Glue** merges
+two into one, **Simplify** renames a piece in lower terms — and an animated
+**sensei** tutors. Completing a lesson earns a karate **belt**.
 
 - Requirements: see `PRD.pdf`
 - Due: ~2026-05-25
-- Stack: Vite + React + TS, Tailwind, Zustand, ShadCN, framer-motion, Vitest.
-  Pure-TS `core/` kept React-free so logic can port to React Native later.
+- Stack: Vite + React + TS, Vitest. Pure-TS `core/` kept React-free so the
+  logic can port to React Native later.
 
-## PR Backlog
+## Done
 
-Ordered so the PRD-satisfying MVP lands first, then demo-strengthening features,
-then reach goals. Tick a box when its PR merges.
+- **Scaffold & tooling** — Vite + React + TS, Tailwind, Vitest, ESLint.
+- **Core domain logic** — pure-TS `fraction.ts`, `board.ts` (region model:
+  chop / glue / simplify), `rect.ts` geometry; 56 unit tests.
+- **Board manipulative** — `BoardView` renders the board; three tools with
+  on-board feedback (chop preview line, glowing glue seams, simplify glow).
+- **Dojo UI** — the dojo screen integrated from the Claude Design handoff:
+  sensei, speech bubble, tool buttons, belt bar, wooden frame.
+- **Lesson engine — Phase 1** — `core/lesson.ts` + the `LessonScreen` runner.
+  The **White Belt**: a 4-step on-rails lesson teaching Chop, Glue, Simplify,
+  ending on the equivalence reveal (2/4 = 1/2). Each step is gated by a
+  Continue button so nothing races off-screen.
 
-### Tier 1 — MVP (satisfies the PRD)
-- [x] **PR 1 · Scaffold & tooling** — Vite+React+TS, Tailwind, Zustand, ShadCN, Vitest, lint; app shell boots; README skeleton.
-- [x] **PR 2 · Core domain logic** — pure-TS `fraction.ts` + `board.ts` (chop halves, mend merges) + unit tests.
-- [ ] **PR 3 · Board manipulative** — `BoardView` SVG renders the piece tree; tap-to-chop + mend; `Toolbar`; store-wired.
-- [ ] **PR 4 · Lesson engine + scripted tutor + README** — `engine.ts` + `script.ts`; text tutor; explore→guided→check-for-understanding with branching; placeholder sensei; finalized README. *(PRD satisfied after this PR.)*
+## Backlog
 
-### Deploy the MVP (once Tier 1 is done)
-- [ ] **PR 5 · Deploy the MVP** — deploy PR 1–4 to a public URL so the MVP can be demoed and tablet-tested. Host TBD (e.g. Vercel / Netlify / GitLab Pages).
+Ordered by priority — tick a box when done.
 
-### Tier 2 — Make it a great demo
-- [ ] **PR 6 · Chop/mend juice** — particles, screen-shake, sparkle, action hover-previews, sound effects.
-- [ ] **PR 7 · Animated sensei** — `<Sensei>` with AI-generated flat-vector poses + expressions.
-- [ ] **PR 8 · Voice-first tutor** — Web Speech API speaks the script; transcript kept as fallback.
-- [ ] **PR 9 · Onboarding ritual** — audio/music check, boy/girl pronoun, name pronunciation + phonetic fallback.
-- [ ] **PR 10 · Belts & celebration** — belt progress UI + belt-up celebration (confetti + gong).
-- [ ] **PR 11 · Adaptive presence** — idle-timer hints + proximity encouragement.
-- [ ] **PR 12 · Accessibility & settings** — pause → Settings: voice speed, read-aloud, dyslexic font, on-screen keyboard.
+### 1 · Lessons & teaching (the core deliverable)
+- [ ] **Challenge steps** — a step kind with a start board and a goal state;
+      the student reaches it with freely-chosen tools.
+- [ ] **Question steps** — Synthesis-style teaching moments: the sensei asks
+      and the student answers a fraction in a `[ ] / [ ]` input; right and
+      wrong answers get different responses.
+- [ ] **Real curriculum** — belts beyond White: each belt teaches an
+      equivalence idea at rising mastery (recognise → build → answer unaided).
+- [ ] **Hints** — surface each step's hints when the student is stuck.
+- [ ] **Progressive tools** — reveal a tool only once a lesson has taught it.
 
-### Tier 3 — Reach goals
-- [ ] **PR 13 · Multi-lesson framework + 2nd lesson** — lesson registry, select screen, belt path.
-- [ ] **PR 14 · Advanced chops** — strength-3/5 moves ("Tiger Strike" / "Crane Kick") for thirds & fifths.
-- [ ] **PR 15 · Paint/color tool** — Fill tool; color carries fraction meaning.
-- [ ] **PR 16 · Spanish (i18n)** — localized script + Spanish voice + language toggle.
-- [ ] **PR 17 · Parent app & student registration** — parent sign-up, register a child as student.
+### 2 · Audio-visual polish (make it feel good)
+- [ ] **Visual juice** — chop particles, glue sparkle, simplify shimmer,
+      step-success and belt-up celebrations.
+- [ ] **Sound effects** — chop, glue, simplify, success, belt-up.
+- [ ] **Sensei expressions** — poses / expressions that react to the lesson.
+
+### 3 · Intro & onboarding
+- [ ] **Intro screen** — a game-style start that collects name + pronoun
+      (skippable). Light polish, not on the critical path.
+
+### 4 · Ship it
+- [ ] **Deploy** — deploy to a public URL for browser / tablet testing.
+- [ ] **README + demo** — finalize the README's technical approach and
+      run instructions; record the 1–2 minute demo video.
 
 ## Deliverables (PRD)
-- Working web app, runnable in a browser (tested in Chrome tablet view) — PR 1–4
-- README with run instructions + technical approach — PR 4
-- 1–2 minute demo video — recorded at end of sprint (not a PR)
+- Working web app, runnable in a browser (tested in Chrome tablet view)
+- README with run instructions + technical approach
+- 1–2 minute demo video — recorded at the end of the sprint

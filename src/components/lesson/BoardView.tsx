@@ -9,11 +9,11 @@
  */
 
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { type Board, type Rect, findPiece, gluablePairs } from '@/core/board';
+import { type Board, type Rect, type Tool, findPiece, gluablePairs } from '@/core/board';
 import { type Seam, seamBetween } from '@/core/rect';
 import { canChopFurther } from './chop-limit';
 
-export type Tool = 'chop' | 'glue' | 'simplify';
+export type { Tool };
 
 /* ─── piece styling ──────────────────────────────────────────────────── */
 
@@ -31,6 +31,9 @@ function pieceStyle(denominator: number) {
   return PIECE_STYLES[denominator] ?? PIECE_STYLES[64];
 }
 
+// A locked "master" piece — carved stone, not painted wood.
+const STONE_STYLE = { fill: '#9a948a', edge: '#56524b' };
+
 /* ─── one piece ──────────────────────────────────────────────────────── */
 
 interface PieceViewProps {
@@ -39,24 +42,36 @@ interface PieceViewProps {
   denominator: number;
   rect: Rect;
   tool: Tool;
+  locked: boolean;
+  chopLimit?: number;
   onTap: (id: string) => void;
 }
 
-function PieceView({ id, numerator, denominator, rect, tool, onTap }: PieceViewProps) {
-  const style = pieceStyle(denominator);
+function PieceView({
+  id,
+  numerator,
+  denominator,
+  rect,
+  tool,
+  locked,
+  chopLimit,
+  onTap,
+}: PieceViewProps) {
+  const style = locked ? STONE_STYLE : pieceStyle(denominator);
   // A chop cuts along the piece's longer side.
   const cutVertical = rect.w >= rect.h;
   const showChopLine =
-    tool === 'chop' && canChopFurther({ numerator, denominator });
+    !locked && tool === 'chop' && canChopFurther({ numerator, denominator }, chopLimit);
   const canSimplify =
-    tool === 'simplify' && numerator % 2 === 0 && denominator % 2 === 0;
+    !locked && tool === 'simplify' && numerator % 2 === 0 && denominator % 2 === 0;
 
   return (
     <button
       type="button"
       className="piece"
-      aria-label={`${numerator}/${denominator} piece`}
+      aria-label={`${numerator}/${denominator} piece${locked ? ' (locked)' : ''}`}
       onClick={() => onTap(id)}
+      disabled={locked}
       style={{
         position: 'absolute',
         left: `${rect.x * 100}%`,
@@ -86,19 +101,63 @@ function PieceView({ id, numerator, denominator, rect, tool, onTap }: PieceViewP
           color: '#fff',
         }}
       >
-        {/* faint wood grain */}
-        <svg
-          viewBox="0 0 100 100"
-          preserveAspectRatio="none"
-          width="100%"
-          height="100%"
-          aria-hidden
-          style={{ position: 'absolute', inset: 0, zIndex: 0, opacity: 0.22, mixBlendMode: 'multiply' }}
-        >
-          <path d="M 0 22 Q 40 26 100 20" stroke="#000" strokeWidth="0.6" fill="none" />
-          <path d="M 0 48 Q 50 44 100 50" stroke="#000" strokeWidth="0.5" fill="none" />
-          <path d="M 0 72 Q 60 78 100 70" stroke="#000" strokeWidth="0.6" fill="none" />
-        </svg>
+        {/* surface texture — speckled stone for a locked piece, else wood grain */}
+        {locked ? (
+          <svg
+            viewBox="0 0 100 100"
+            preserveAspectRatio="none"
+            width="100%"
+            height="100%"
+            aria-hidden
+            style={{ position: 'absolute', inset: 0, zIndex: 0, opacity: 0.55, mixBlendMode: 'multiply' }}
+          >
+            <ellipse cx="26" cy="32" rx="15" ry="10" fill="#000" opacity="0.10" />
+            <ellipse cx="70" cy="22" rx="10" ry="8" fill="#000" opacity="0.13" />
+            <ellipse cx="78" cy="64" rx="16" ry="11" fill="#000" opacity="0.10" />
+            <ellipse cx="38" cy="74" rx="12" ry="9" fill="#000" opacity="0.14" />
+            <ellipse cx="54" cy="50" rx="8" ry="6" fill="#000" opacity="0.10" />
+            <circle cx="62" cy="84" r="3" fill="#000" opacity="0.20" />
+            <circle cx="16" cy="58" r="2.6" fill="#000" opacity="0.20" />
+            <circle cx="88" cy="40" r="2.2" fill="#000" opacity="0.20" />
+          </svg>
+        ) : (
+          <svg
+            viewBox="0 0 100 100"
+            preserveAspectRatio="none"
+            width="100%"
+            height="100%"
+            aria-hidden
+            style={{ position: 'absolute', inset: 0, zIndex: 0, opacity: 0.22, mixBlendMode: 'multiply' }}
+          >
+            <path d="M 0 22 Q 40 26 100 20" stroke="#000" strokeWidth="0.6" fill="none" />
+            <path d="M 0 48 Q 50 44 100 50" stroke="#000" strokeWidth="0.5" fill="none" />
+            <path d="M 0 72 Q 60 78 100 70" stroke="#000" strokeWidth="0.6" fill="none" />
+          </svg>
+        )}
+
+        {/* lock badge — this piece is the puzzle's fixed master */}
+        {locked && (
+          <svg
+            viewBox="0 0 24 24"
+            aria-hidden
+            style={{
+              position: 'absolute',
+              top: '8%',
+              right: '8%',
+              width: '26cqmin',
+              height: '26cqmin',
+              zIndex: 1,
+            }}
+          >
+            <path
+              d="M 7 11 V 8 a 5 5 0 0 1 10 0 V 11"
+              fill="none"
+              stroke="#2e2b27"
+              strokeWidth="2.6"
+            />
+            <rect x="4.5" y="11" width="15" height="11" rx="2.4" fill="#2e2b27" />
+          </svg>
+        )}
 
         {/* chop preview — a dashed cut-line, shown on hover, behind the label */}
         {showChopLine && (
@@ -255,11 +314,13 @@ function ChopFx({ fx, onDone }: { fx: ChopFxState; onDone: () => void }) {
 interface BoardViewProps {
   board: Board;
   tool: Tool;
+  /** Tightest denominator the chop tool may reach (puzzle-specific). */
+  chopLimit?: number;
   onPieceTap: (id: string) => void;
   onGlue: (idA: string, idB: string) => void;
 }
 
-export function BoardView({ board, tool, onPieceTap, onGlue }: BoardViewProps) {
+export function BoardView({ board, tool, chopLimit, onPieceTap, onGlue }: BoardViewProps) {
   const [chopFx, setChopFx] = useState<ChopFxState | null>(null);
   // A monotonic counter keys each flash, so two chops in the same millisecond
   // still remount ChopFx (Date.now() would collide and drop the second one).
@@ -278,7 +339,7 @@ export function BoardView({ board, tool, onPieceTap, onGlue }: BoardViewProps) {
   const handlePieceTap = (id: string) => {
     const piece = findPiece(board, id);
     // Flash only when the tap will actually chop a piece within the size limit.
-    if (piece && tool === 'chop' && canChopFurther(piece.value)) {
+    if (piece && !piece.locked && tool === 'chop' && canChopFurther(piece.value, chopLimit)) {
       chopFxCount.current += 1;
       setChopFx({
         key: chopFxCount.current,
@@ -348,6 +409,8 @@ export function BoardView({ board, tool, onPieceTap, onGlue }: BoardViewProps) {
             denominator={piece.value.denominator}
             rect={piece.rect}
             tool={tool}
+            locked={piece.locked ?? false}
+            chopLimit={chopLimit}
             onTap={handlePieceTap}
           />
         ))}

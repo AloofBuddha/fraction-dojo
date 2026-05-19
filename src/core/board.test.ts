@@ -1,6 +1,7 @@
 import {
   createBoard,
   findPiece,
+  lockPiece,
   halfValue,
   chop,
   canGlue,
@@ -154,5 +155,30 @@ describe('the equivalence the lesson teaches', () => {
     board = chop(board, '0.5:0:0.5:0.5');
     const total = board.pieces.reduce((sum, p) => sum + toValue(p.value), 0);
     expect(total).toBeCloseTo(1);
+  });
+});
+
+describe('lockPiece()', () => {
+  it('marks a piece as locked', () => {
+    expect(findPiece(lockPiece(createBoard(), WHOLE), WHOLE)?.locked).toBe(true);
+  });
+
+  it('a locked piece cannot be chopped', () => {
+    expect(() => chop(lockPiece(createBoard(), WHOLE), WHOLE)).toThrow();
+  });
+
+  it('a locked piece cannot be glued to its neighbour', () => {
+    // chop into halves, lock the left — gluing it back is now refused
+    const board = lockPiece(chop(createBoard(), WHOLE), LEFT_HALF);
+    expect(canGlue(board, LEFT_HALF, RIGHT_HALF)).toBe(false);
+  });
+
+  it('a locked piece cannot be simplified', () => {
+    // build a 2/4 at RIGHT_HALF, lock it, then simplify is refused
+    let board = chop(createBoard(), WHOLE);
+    board = chop(board, RIGHT_HALF);
+    board = glue(board, '0.5:0:0.5:0.5', '0.5:0.5:0.5:0.5');
+    board = lockPiece(board, RIGHT_HALF);
+    expect(canSimplify(board, RIGHT_HALF)).toBe(false);
   });
 });

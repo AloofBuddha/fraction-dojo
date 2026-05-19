@@ -1,27 +1,31 @@
-/* The lesson screen — the full dojo, integrated from the Claude Design handoff.
+/* The lesson screen — the dojo, driven by the lesson engine.
  *
- * The frame fills the whole viewport (tablet-first, landscape) and is
- * responsive. Three tools drive the board manipulative:
- *  - Chop     — tap a piece to split it in two (capped at 1/64).
- *  - Glue     — tap a glowing seam to merge two adjacent same-denominator pieces.
- *  - Simplify — tap a glowing piece to reduce its fraction (2/4 → 1/2).
- * The sensei dialogue and belt are static for now — the lesson engine that
- * drives them is the next step.
+ * It walks the student through the curriculum in ./lessons. A `board` step is
+ * a puzzle solved on the manipulative; a `question` step keeps the board on
+ * screen as a scratchpad and asks for a fraction beneath the sensei. Tools
+ * reveal progressively — a button appears only once a puzzle has introduced
+ * it. Each step ends with a Continue gate.
  */
 
 import { useState } from 'react';
 import {
   type Board,
+  type Tool,
   createBoard,
   chop,
   glue,
   canGlue,
+  gluablePairs,
   simplify,
   canSimplify,
   findPiece,
 } from '@/core/board';
-import { BoardView, type Tool } from './BoardView';
+import type { Step } from '@/core/lesson';
+import { fraction } from '@/core/fraction';
+import { BoardView } from './BoardView';
+import { QuestionPanel } from './QuestionPanel';
 import { canChopFurther } from './chop-limit';
+import { LESSONS } from './lessons';
 import { ToolButton } from './ToolButton';
 import { Sensei } from './Sensei';
 import { SpeechBubble } from './SpeechBubble';
@@ -31,47 +35,157 @@ import { PauseButton } from './PauseButton';
 import { IconChop, IconGlue, IconSimplify } from './icons';
 import '@/styles/dojo.css';
 
-export function LessonScreen() {
-  const [board, setBoard] = useState<Board>(() => createBoard());
-  const [tool, setTool] = useState<Tool>('chop');
+const FIRST_STEP = LESSONS[0].steps[0];
+const INITIAL_BOARD = FIRST_STEP.kind === 'board' ? FIRST_STEP.startBoard : createBoard();
 
-  // Chop or simplify the tapped piece, depending on the active tool.
+// Every tool introduced by a board step up to and including (lessonIndex,
+// stepIndex) — drives which tool buttons are on screen.
+function revealedTools(lessonIndex: number, stepIndex: number): Set<Tool> {
+  const revealed = new Set<Tool>();
+  LESSONS.forEach((lesson, li) => {
+    if (li > lessonIndex) return;
+    lesson.steps.forEach((step, si) => {
+      if (li === lessonIndex && si > stepIndex) return;
+      if (step.kind === 'board') step.allowedTools.forEach((t) => revealed.add(t));
+    });
+  });
+  return revealed;
+}
+
+// The board a step puts on screen — its puzzle, or a question's scratchpad.
+function stepBoard(step: Step): Board {
+  return step.kind === 'board' ? step.startBoard : step.scratchBoard;
+}
+
+export function LessonScreen() {
+  const [lessonIndex, setLessonIndex] = useState(0);
+  const [stepIndex, setStepIndex] = useState(0);
+  const [board, setBoard] = useState<Board>(INITIAL_BOARD);
+  const [tool, setTool] = useState<Tool>('chop');
+  const [celebrating, setCelebrating] = useState(false);
+  const [numInput, setNumInput] = useState('');
+  const [denInput, setDenInput] = useState('');
+  const [feedbackWrong, setFeedbackWrong] = useState(false);
+
+  const lesson = LESSONS[lessonIndex];
+  const step = lesson?.steps[stepIndex];
+  const done = lessonIndex >= LESSONS.length;
+  const isQuestion = step?.kind === 'question';
+  const revealed = revealedTools(lessonIndex, stepIndex);
+
+  // Apply a board change, then check whether it satisfies the current step.
+  const applyMove = (next: Board) => {
+    setBoard(next);
+    if (step?.kind === 'board' && step.isComplete(next)) setCelebrating(true);
+  };
+
+  // Set up the board / tool for a step the runner is about to show.
+  const enterStep = (next: Step) => {
+    setBoard(stepBoard(next));
+    setTool(next.kind === 'board' ? next.allowedTools[0] : 'chop');
+  };
+
+  // Tap Continue once a step is done — move to the next step / lesson.
+  const advance = () => {
+    if (!lesson) return;
+    if (stepIndex + 1 < lesson.steps.length) {
+      setStepIndex(stepIndex + 1);
+      enterStep(lesson.steps[stepIndex + 1]);
+    } else {
+      const nextLesson = LESSONS[lessonIndex + 1];
+      setLessonIndex(lessonIndex + 1);
+      setStepIndex(0);
+      if (nextLesson) enterStep(nextLesson.steps[0]);
+    }
+    setCelebrating(false);
+    setFeedbackWrong(false);
+    setNumInput('');
+    setDenInput('');
+  };
+
+  // Check a question step's answer.
+  const submitAnswer = () => {
+    if (step?.kind !== 'question') return;
+    const num = Number(numInput);
+    const den = Number(denInput);
+    const valid =
+      numInput !== '' &&
+      denInput !== '' &&
+      Number.isInteger(num) &&
+      Number.isInteger(den) &&
+      num >= 0 &&
+      den > 0;
+    if (valid && step.isCorrect(fraction(num, den))) {
+      setCelebrating(true);
+    } else {
+      setFeedbackWrong(true);
+    }
+  };
+
+  // Editing an answer clears the "wrong" feedback back to the question.
+  const editNumerator = (value: string) => {
+    setNumInput(value);
+    setFeedbackWrong(false);
+  };
+  const editDenominator = (value: string) => {
+    setDenInput(value);
+    setFeedbackWrong(false);
+  };
+
+  // Which tools are usable now — a board step's allowed set, or, on a question
+  // scratchpad, every tool learned so far.
+  const toolAllowed = (t: Tool) => {
+    if (!step || celebrating) return false;
+    return step.kind === 'board' ? step.allowedTools.includes(t) : revealed.has(t);
+  };
+  const chopLimit = step?.kind === 'board' ? step.maxDenominator : undefined;
+  const chopEnabled =
+    toolAllowed('chop') && board.pieces.some((p) => canChopFurther(p.value, chopLimit));
+  const glueEnabled = toolAllowed('glue') && gluablePairs(board).length > 0;
+  const simplifyEnabled =
+    toolAllowed('simplify') && board.pieces.some((p) => canSimplify(board, p.id));
+
   const handlePieceTap = (id: string) => {
     const piece = findPiece(board, id);
-    if (!piece) return;
-    if (tool === 'chop') {
-      // refuse a chop that would take the piece past the 1/64 readability limit
-      if (canChopFurther(piece.value)) {
-        setBoard(chop(board, id));
-      }
-    } else if (tool === 'simplify') {
-      if (canSimplify(board, id)) {
-        setBoard(simplify(board, id));
-      }
+    if (!piece || piece.locked) return;
+    if (tool === 'chop' && chopEnabled && canChopFurther(piece.value, chopLimit)) {
+      applyMove(chop(board, id));
+    } else if (tool === 'simplify' && simplifyEnabled && canSimplify(board, id)) {
+      applyMove(simplify(board, id));
     }
   };
 
-  // Glue two pieces at the tapped seam.
   const handleGlue = (idA: string, idB: string) => {
-    if (canGlue(board, idA, idB)) {
-      setBoard(glue(board, idA, idB));
+    if (glueEnabled && canGlue(board, idA, idB)) {
+      applyMove(glue(board, idA, idB));
     }
   };
+
+  // What the sensei is saying right now.
+  const senseiSays = (): string => {
+    if (done) {
+      const lastBelt = LESSONS[LESSONS.length - 1].title;
+      return `Outstanding — you have earned your ${lastBelt}. Equivalence, mastered!`;
+    }
+    if (!step) return '';
+    if (celebrating) {
+      return step.kind === 'question' ? step.correctLine : step.successLine;
+    }
+    if (step.kind === 'question' && feedbackWrong) return step.wrongLine;
+    return step.instruction;
+  };
+  const senseiText = senseiSays();
+  const beltLabel = lesson ? lesson.title : 'Belt earned!';
 
   return (
     <div className="stage">
       <div className="frame">
         <DojoBackground />
 
-        {/* top bar — on the wooden beam: pause left, belt + lesson centered. */}
+        {/* top bar — pause left, belt + lesson title centered */}
         <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 112, zIndex: 5 }}>
           <div
-            style={{
-              position: 'absolute',
-              left: 24,
-              top: '50%',
-              transform: 'translateY(-50%)',
-            }}
+            style={{ position: 'absolute', left: 24, top: '50%', transform: 'translateY(-50%)' }}
           >
             <PauseButton />
           </div>
@@ -83,11 +197,14 @@ export function LessonScreen() {
               justifyContent: 'center',
             }}
           >
-            <BeltBar rankIndex={0} label="Lesson 1 · Equivalent Fractions" />
+            <BeltBar
+              rankIndex={Math.min(lessonIndex, LESSONS.length - 1)}
+              label={beltLabel}
+            />
           </div>
         </div>
 
-        {/* main row — sensei (1/4) · board (2/4) · tools (1/4), even gaps */}
+        {/* main row — sensei (1/4) · board (2/4) · tools (1/4) */}
         <div
           style={{
             position: 'absolute',
@@ -102,7 +219,7 @@ export function LessonScreen() {
             zIndex: 2,
           }}
         >
-          {/* sensei + speech bubble — stacked, centered in the column */}
+          {/* sensei: speech bubble, then the answer panel or the Continue gate */}
           <div
             style={{
               display: 'flex',
@@ -114,11 +231,46 @@ export function LessonScreen() {
             }}
           >
             <div style={{ width: 'min(100%, 360px)' }}>
-              <SpeechBubble
-                text="Welcome to the dojo, young student!"
-                accent="Pick your karate chop and split the board in two."
-              />
+              <SpeechBubble text={senseiText} />
             </div>
+            {isQuestion && !celebrating && (
+              <div style={{ marginTop: 52 }}>
+                <QuestionPanel
+                  numerator={numInput}
+                  denominator={denInput}
+                  onNumerator={editNumerator}
+                  onDenominator={editDenominator}
+                  onSubmit={submitAnswer}
+                />
+              </div>
+            )}
+            {celebrating && (
+              <button
+                type="button"
+                onClick={advance}
+                style={{
+                  marginTop: 52,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 8,
+                  padding: '12px 26px',
+                  borderRadius: 999,
+                  border: '3px solid #1f1712',
+                  background: 'linear-gradient(180deg, #7ed47f, #4caf50)',
+                  color: '#fff',
+                  fontFamily: 'Fredoka, system-ui, sans-serif',
+                  fontWeight: 700,
+                  fontSize: 17,
+                  cursor: 'pointer',
+                  boxShadow: '0 5px 0 #1f1712, 0 8px 14px rgba(0,0,0,0.25)',
+                }}
+              >
+                <span aria-hidden style={{ fontSize: 20, lineHeight: 1 }}>
+                  ✓
+                </span>
+                Continue
+              </button>
+            )}
             <div
               style={{
                 width: 'min(260px, 100%)',
@@ -131,31 +283,61 @@ export function LessonScreen() {
             </div>
           </div>
 
-          {/* board — a centered square, top-aligned so the tools line up to it */}
+          {/* the board — a puzzle, or a question's scratchpad — and Reset */}
           <div style={{ display: 'grid', placeItems: 'start center' }}>
-            <div style={{ width: 'min(100%, calc(100svh - 220px))' }}>
+            <div
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: 14,
+                width: 'min(100%, calc(100svh - 220px))',
+              }}
+            >
               <BoardView
                 board={board}
                 tool={tool}
+                chopLimit={chopLimit}
                 onPieceTap={handlePieceTap}
                 onGlue={handleGlue}
               />
+              {!celebrating && step && (
+                <button
+                  type="button"
+                  onClick={() => setBoard(stepBoard(step))}
+                  style={{
+                    padding: '8px 18px',
+                    borderRadius: 999,
+                    border: '2px solid #5c3a1e',
+                    background: 'linear-gradient(180deg, #c99a63, #a9743d)',
+                    color: '#3a2412',
+                    fontFamily: 'Fredoka, system-ui, sans-serif',
+                    fontWeight: 700,
+                    fontSize: 13,
+                    cursor: 'pointer',
+                    boxShadow: '0 3px 0 #5c3a1e',
+                  }}
+                >
+                  {isQuestion ? '↺ Reset the play board' : '↺ Start this puzzle over'}
+                </button>
+              )}
             </div>
           </div>
 
-          {/* tools — top-aligned to the board, centered in the column */}
+          {/* tools — only those a puzzle has introduced; "Your Tools" pinned to
+              the board's top, the buttons grouped so 4rem gaps fall between them */}
           <div
             style={{
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',
               justifyContent: 'flex-start',
-              gap: 14,
               fontFamily: 'Fredoka, system-ui, sans-serif',
             }}
           >
             <div
               style={{
+                marginBottom: 28,
                 fontWeight: 700,
                 fontSize: 13,
                 letterSpacing: 2,
@@ -166,34 +348,52 @@ export function LessonScreen() {
               Your Tools
             </div>
 
-            <ToolButton
-              label="Chop"
-              hint="Splits a piece in two"
-              active={tool === 'chop'}
-              onClick={() => setTool('chop')}
+            <div
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                rowGap: '4rem',
+              }}
             >
-              <IconChop size={48} />
-            </ToolButton>
+              {revealed.has('chop') && (
+                <ToolButton
+                  label="Chop"
+                  hint="Splits a piece in two"
+                  active={tool === 'chop'}
+                  disabled={!chopEnabled}
+                  onClick={() => setTool('chop')}
+                >
+                  <IconChop size={48} />
+                </ToolButton>
+              )}
 
-            <ToolButton
-              label="Glue"
-              hint="Fuses two pieces into one"
-              accent="#f3b13a"
-              active={tool === 'glue'}
-              onClick={() => setTool('glue')}
-            >
-              <IconGlue size={48} />
-            </ToolButton>
+              {revealed.has('glue') && (
+                <ToolButton
+                  label="Glue"
+                  hint="Fuses two pieces into one"
+                  accent="#f3b13a"
+                  active={tool === 'glue'}
+                  disabled={!glueEnabled}
+                  onClick={() => setTool('glue')}
+                >
+                  <IconGlue size={48} />
+                </ToolButton>
+              )}
 
-            <ToolButton
-              label="Simplify"
-              hint="Reduces a piece to lower terms"
-              accent="#5fb24a"
-              active={tool === 'simplify'}
-              onClick={() => setTool('simplify')}
-            >
-              <IconSimplify size={44} />
-            </ToolButton>
+              {revealed.has('simplify') && (
+                <ToolButton
+                  label="Simplify"
+                  hint="Reduces a piece to lower terms"
+                  accent="#5fb24a"
+                  active={tool === 'simplify'}
+                  disabled={!simplifyEnabled}
+                  onClick={() => setTool('simplify')}
+                >
+                  <IconSimplify size={44} />
+                </ToolButton>
+              )}
+            </div>
           </div>
         </div>
       </div>

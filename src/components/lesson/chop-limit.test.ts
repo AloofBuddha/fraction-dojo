@@ -14,4 +14,9 @@ describe('canChopFurther()', () => {
     // halving the numerator keeps the denominator within the limit
     expect(canChopFurther(fraction(2, 64))).toBe(true);
   });
+
+  it('respects a tighter puzzle limit — a quarter cannot be chopped past 4', () => {
+    expect(canChopFurther(fraction(1, 4), 4)).toBe(false); // 1/4 → 1/8 overshoots
+    expect(canChopFurther(fraction(1, 2), 4)).toBe(true); // 1/2 → 1/4 is allowed
+  });
 });
