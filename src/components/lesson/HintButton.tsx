@@ -5,23 +5,24 @@
 import type { CSSProperties, ReactNode } from 'react';
 import { useEffect, useRef, useState } from 'react';
 import { INK, PARCHMENT_DARK, PARCHMENT_LIGHT } from '@/constants/theme';
+import { IconLightbulb } from './icons';
 
 interface HintButtonProps {
   /** What the popover shows — typically a GoalPreview. */
   children: ReactNode;
 }
 
+// Hint button — bright yellow lightbulb to read as "bright idea."
 const TRIGGER_STYLE: CSSProperties = {
   width: 44,
   height: 44,
   borderRadius: 10,
   border: 'none',
   background:
-    'radial-gradient(circle at 35% 30%, #f6ecd6 0%, #e0c890 60%, #b08c4a 100%)',
+    'radial-gradient(circle at 35% 30%, #ffe680 0%, #f3b13a 60%, #b8801f 100%)',
   color: INK,
   fontFamily: 'Fredoka, system-ui, sans-serif',
   fontWeight: 700,
-  fontSize: 22,
   lineHeight: 1,
   display: 'flex',
   alignItems: 'center',
@@ -31,18 +32,26 @@ const TRIGGER_STYLE: CSSProperties = {
   padding: 0,
 };
 
-// Popover anchors to the LEFT of the trigger (i.e. floats over the board
-// area) since the trigger lives in the gutter to the right of the board.
+// Popover overlaps the trigger — center of the popover sits on the
+// center of the button so the goal blossoms out from the same point the
+// student tapped. Tapping anywhere (popover itself or outside) closes it.
+// Square by design — the goal it shows is a square thumbnail.
+const POPOVER_SIZE = 200;
 const POPOVER_STYLE: CSSProperties = {
   position: 'absolute',
-  top: 0,
-  right: '110%',
+  top: '50%',
+  left: '50%',
+  transform: 'translate(-50%, -50%)',
+  width: POPOVER_SIZE,
+  height: POPOVER_SIZE,
   background: `linear-gradient(180deg, ${PARCHMENT_LIGHT} 0%, ${PARCHMENT_DARK} 100%)`,
   border: `3px solid ${INK}`,
   borderRadius: 14,
-  padding: 12,
   boxShadow: '0 8px 18px rgba(0,0,0,0.35)',
+  display: 'grid',
+  placeItems: 'center',
   zIndex: 20,
+  cursor: 'pointer',
 };
 
 export function HintButton({ children }: HintButtonProps) {
@@ -82,9 +91,21 @@ export function HintButton({ children }: HintButtonProps) {
         title="Show the goal"
         style={TRIGGER_STYLE}
       >
-        ?
+        <IconLightbulb size={26} />
       </button>
-      {open && <div style={POPOVER_STYLE}>{children}</div>}
+      {open && (
+        <div
+          role="button"
+          tabIndex={0}
+          onClick={() => setOpen(false)}
+          onKeyDown={(event) => {
+            if (event.key === 'Enter' || event.key === ' ') setOpen(false);
+          }}
+          style={POPOVER_STYLE}
+        >
+          {children}
+        </div>
+      )}
     </div>
   );
 }

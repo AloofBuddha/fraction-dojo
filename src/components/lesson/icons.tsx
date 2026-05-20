@@ -64,6 +64,32 @@ export function IconPause({ size = 28 }: IconProps) {
   );
 }
 
+/** A lightbulb — the classic "hint / bright idea" affordance. Filled
+ *  glass bulb with a stylized base and two filament glints. */
+export function IconLightbulb({ size = 22 }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" width={size} height={size} aria-hidden>
+      {/* bulb */}
+      <path
+        d="M 12 3 a 6 6 0 0 0 -3.6 10.8 v 2.7 h 7.2 v -2.7 A 6 6 0 0 0 12 3 z"
+        fill="currentColor"
+      />
+      {/* base */}
+      <rect x="9" y="17" width="6" height="2" rx="0.6" fill="currentColor" />
+      <rect x="10" y="20" width="4" height="1.6" rx="0.6" fill="currentColor" />
+      {/* glints */}
+      <path
+        d="M 10.5 8 l 1.2 2.4 l 1.5 -2"
+        stroke="rgba(255,255,255,0.7)"
+        strokeWidth="1.4"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        fill="none"
+      />
+    </svg>
+  );
+}
+
 /** A microphone — marks the sensei's speech as voice-first. */
 export function IconMic({ size = 22 }: IconProps) {
   return (

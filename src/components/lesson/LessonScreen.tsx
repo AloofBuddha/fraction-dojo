@@ -635,8 +635,8 @@ export function LessonScreen() {
                       borderRadius: 10,
                       border: 'none',
                       background:
-                        'radial-gradient(circle at 35% 30%, #f6ecd6 0%, #e0c890 60%, #b08c4a 100%)',
-                      color: INK,
+                        'radial-gradient(circle at 35% 30%, #ff8a78 0%, #d8453d 60%, #8b2a23 100%)',
+                      color: '#fff',
                       fontFamily: 'Fredoka, system-ui, sans-serif',
                       fontWeight: 700,
                       fontSize: 22,
@@ -656,76 +656,87 @@ export function LessonScreen() {
             </div>
           </div>
 
-          {/* tools column — three buttons in a dedicated lane. The Goal
-              preview now lives behind a Hint button at the board's top
-              right, so the tools column has full vertical room. */}
+          {/* Spacer column on the right — keeps the board centered in the
+              main row while the tools column floats absolutely outside. */}
+          <div style={{ flex: 1, minWidth: 0 }} />
+        </div>
+
+        {/* tools column — pulled OUT of the main row so its header can
+            align with the red banner (top:84) and the bottom of Simplify
+            can align with the board's bottom (main row bottom:66). The
+            three buttons distribute their vertical space via space-between
+            so Simplify always lands at the bottom edge. */}
+        <div
+          style={{
+            position: 'absolute',
+            top: 84,
+            bottom: 66,
+            right: 24,
+            width: 160,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            fontFamily: 'Fredoka, system-ui, sans-serif',
+            zIndex: 3,
+          }}
+        >
           <div
             style={{
+              fontWeight: 700,
+              fontSize: 12,
+              letterSpacing: 1.6,
+              color: '#7a4a26',
+              textTransform: 'uppercase',
+            }}
+          >
+            Your Tools
+          </div>
+
+          {/* TEMP: all three tool slots are forced visible to verify the
+           *  column has room for them. Restore the visibility gate
+           *  (revealed.has(...) ? 'visible' : 'hidden') before shipping. */}
+          <div
+            style={{
+              flex: 1,
+              marginTop: 16,
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',
-              justifyContent: 'flex-start',
-              fontFamily: 'Fredoka, system-ui, sans-serif',
-              flex: 1,
-              minWidth: 0,
+              justifyContent: 'space-between',
+              width: '100%',
             }}
           >
-            <div
-              style={{
-                marginBottom: 12,
-                fontWeight: 700,
-                fontSize: 12,
-                letterSpacing: 1.6,
-                color: '#7a4a26',
-                textTransform: 'uppercase',
-              }}
+            <ToolButton
+              label="Chop"
+              hint="Splits a piece in two"
+              active={tool === 'chop'}
+              disabled={!chopEnabled}
+              onClick={() => selectTool('chop')}
             >
-              Your Tools
-            </div>
+              <IconChop size={48} />
+            </ToolButton>
 
-            {/* TEMP: all three tool slots are forced visible to verify
-             *  the column has room for them. Restore the visibility gate
-             *  (revealed.has(...) ? 'visible' : 'hidden') before shipping. */}
-            <div
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                rowGap: 20,
-              }}
+            <ToolButton
+              label="Glue"
+              hint="Fuses two pieces into one"
+              accent={TOOL_ACCENT_GLUE}
+              active={tool === 'glue'}
+              disabled={!glueEnabled}
+              onClick={() => selectTool('glue')}
             >
-              <ToolButton
-                label="Chop"
-                hint="Splits a piece in two"
-                active={tool === 'chop'}
-                disabled={!chopEnabled}
-                onClick={() => selectTool('chop')}
-              >
-                <IconChop size={48} />
-              </ToolButton>
+              <IconGlue size={48} />
+            </ToolButton>
 
-              <ToolButton
-                label="Glue"
-                hint="Fuses two pieces into one"
-                accent={TOOL_ACCENT_GLUE}
-                active={tool === 'glue'}
-                disabled={!glueEnabled}
-                onClick={() => selectTool('glue')}
-              >
-                <IconGlue size={48} />
-              </ToolButton>
-
-              <ToolButton
-                label="Simplify"
-                hint="Reduces a piece to lower terms"
-                accent={TOOL_ACCENT_SIMPLIFY}
-                active={tool === 'simplify'}
-                disabled={!simplifyEnabled}
-                onClick={() => selectTool('simplify')}
-              >
-                <IconSimplify size={44} />
-              </ToolButton>
-            </div>
+            <ToolButton
+              label="Simplify"
+              hint="Reduces a piece to lower terms"
+              accent={TOOL_ACCENT_SIMPLIFY}
+              active={tool === 'simplify'}
+              disabled={!simplifyEnabled}
+              onClick={() => selectTool('simplify')}
+            >
+              <IconSimplify size={44} />
+            </ToolButton>
           </div>
         </div>
       </div>
