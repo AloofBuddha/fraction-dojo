@@ -12,6 +12,7 @@ import { Sensei } from "./Sensei";
 import { SpeechBubble } from "./SpeechBubble";
 import { DojoBackground } from "./DojoBackground";
 import { PauseButton } from "./PauseButton";
+import { SettingsModal } from "./SettingsModal";
 import { playSound } from "./sound";
 import { DOJO_RED, INK, PARCHMENT_LIGHT } from "@/constants/theme";
 import "@/styles/dojo.css";
@@ -79,6 +80,7 @@ interface IntroSceneProps {
 
 export function IntroScene({ onDone }: IntroSceneProps) {
   const [index, setIndex] = useState(0);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const beat = BEATS[index];
   const isTitle = index === 0;
   const isLast = index >= BEATS.length - 1;
@@ -140,7 +142,7 @@ export function IntroScene({ onDone }: IntroSceneProps) {
               transform: "translateY(-50%)",
             }}
           >
-            <PauseButton />
+            <PauseButton onClick={() => setSettingsOpen(true)} />
           </div>
         </div>
 
@@ -284,6 +286,10 @@ export function IntroScene({ onDone }: IntroSceneProps) {
               Begin
             </button>
           </div>
+        )}
+
+        {settingsOpen && (
+          <SettingsModal onClose={() => setSettingsOpen(false)} />
         )}
       </div>
     </div>

@@ -3,7 +3,12 @@
  * needs no audio assets — but any one can be overridden by a real recording
  * via the FILES map below, one name at a time. The six SoundNames are the
  * stable contract the rest of the app calls.
+ *
+ * Output respects the dojo:soundEnabled setting in localStorage. Muting
+ * stops any in-flight queue and short-circuits future plays until unmuted.
  */
+
+import { getSoundEnabled } from '@/utils/storage';
 
 export type SoundName =
   | 'chop'
@@ -220,6 +225,7 @@ function playNow(name: SoundName): void {
  * A sound that would land more than ~1.4s behind a burst of taps is dropped.
  */
 export function playSound(name: SoundName): void {
+  if (!getSoundEnabled()) return;
   const now = performance.now();
   const startAt = Math.max(now, busyUntil);
   if (startAt - now > 1400) return;

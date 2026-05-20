@@ -5,6 +5,18 @@
  * brightness below is a harmless mouse-only enhancement, never relied upon. */
 
 @import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&display=swap');
+
+/* When the student turns on the Hyperlegible font in settings, body
+   gets data-font="hyperlegible" and every Fredoka style swaps out for
+   Atkinson Hyperlegible (designed by the Braille Institute for low
+   vision / dyslexia readability). The selector uses * to reach all
+   inline-styled Fredoka call sites; !important wins against inline
+   font-family declarations. */
+body[data-font='hyperlegible'],
+body[data-font='hyperlegible'] * {
+  font-family: 'Atkinson Hyperlegible', system-ui, sans-serif !important;
+}
 
 :root {
   /* Piece colors — by denominator, Cuisenaire-rod logic: same size, same color. */

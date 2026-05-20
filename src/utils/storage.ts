@@ -10,6 +10,11 @@ import type { BeltKey } from '@/core/types';
 
 const INTRO_KEY = 'dojo:introSeen';
 const UNLOCKED_KEY = 'dojo:unlockedBelts';
+const SOUND_KEY = 'dojo:soundEnabled';
+const FONT_KEY = 'dojo:font';
+const VOICE_KEY = 'dojo:voiceEnabled';
+
+export type FontKey = 'default' | 'hyperlegible';
 
 /** The student always starts on White Belt, so it is always unlocked even
  *  on first launch with empty storage. */
@@ -64,5 +69,73 @@ export function markBeltUnlocked(belt: BeltKey): void {
     window.localStorage.setItem(UNLOCKED_KEY, JSON.stringify([...current]));
   } catch {
     // private browsing / quota — silently ignore
+  }
+}
+
+/* ─── Settings: sound effects on/off ───────────────────────────────────── */
+
+export function getSoundEnabled(): boolean {
+  if (typeof window === 'undefined') return true;
+  try {
+    const raw = window.localStorage.getItem(SOUND_KEY);
+    if (raw === null) return true;
+    return raw === 'true';
+  } catch {
+    return true;
+  }
+}
+
+export function setSoundEnabled(value: boolean): void {
+  if (typeof window === 'undefined') return;
+  try {
+    window.localStorage.setItem(SOUND_KEY, value ? 'true' : 'false');
+  } catch {
+    // ignore
+  }
+}
+
+/* ─── Settings: font preference ────────────────────────────────────────── */
+
+export function getFont(): FontKey {
+  if (typeof window === 'undefined') return 'default';
+  try {
+    const raw = window.localStorage.getItem(FONT_KEY);
+    return raw === 'hyperlegible' ? 'hyperlegible' : 'default';
+  } catch {
+    return 'default';
+  }
+}
+
+export function setFont(value: FontKey): void {
+  if (typeof window === 'undefined') return;
+  try {
+    window.localStorage.setItem(FONT_KEY, value);
+  } catch {
+    // ignore
+  }
+  // Apply immediately to the document — CSS rules in dojo.css read
+  // body[data-font] and swap in Atkinson Hyperlegible.
+  document.body.dataset.font = value;
+}
+
+/** Wire the persisted font choice to the body's data-font attribute on
+ *  startup so the document reflects the saved preference before the UI
+ *  paints. Idempotent. */
+export function applyPersistedFont(): void {
+  if (typeof document === 'undefined') return;
+  document.body.dataset.font = getFont();
+}
+
+/* ─── Settings: full reset ─────────────────────────────────────────────── */
+
+/** Wipe every dojo:* key so the next reload looks like a first-time visit. */
+export function resetAllProgress(): void {
+  if (typeof window === 'undefined') return;
+  try {
+    for (const key of [INTRO_KEY, UNLOCKED_KEY, SOUND_KEY, FONT_KEY, VOICE_KEY]) {
+      window.localStorage.removeItem(key);
+    }
+  } catch {
+    // ignore
   }
 }

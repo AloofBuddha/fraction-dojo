@@ -48,6 +48,7 @@ import { TopicChip } from './TopicChip';
 import { LessonPane } from './LessonPane';
 import { HintButton } from './HintButton';
 import { BeltUpOverlay } from './BeltUpOverlay';
+import { SettingsModal } from './SettingsModal';
 import { IconChop, IconGlue, IconSimplify } from './icons';
 import { getUnlockedBelts, markBeltUnlocked } from '@/utils/storage';
 import type { BeltKey } from '@/core/types';
@@ -135,6 +136,7 @@ export function LessonScreen() {
   const [beltUp, setBeltUp] = useState<{ from: BeltKey; to: BeltKey } | null>(
     null,
   );
+  const [settingsOpen, setSettingsOpen] = useState(false);
 
   const lesson = LESSONS[lessonIndex];
   const step = lesson?.steps[stepIndex];
@@ -421,7 +423,7 @@ export function LessonScreen() {
           <div
             style={{ position: 'absolute', left: 24, top: '50%', transform: 'translateY(-50%)' }}
           >
-            <PauseButton />
+            <PauseButton onClick={() => setSettingsOpen(true)} />
           </div>
           <div
             style={{
@@ -471,6 +473,10 @@ export function LessonScreen() {
             to={beltUp.to}
             onDone={() => setBeltUp(null)}
           />
+        )}
+
+        {settingsOpen && (
+          <SettingsModal onClose={() => setSettingsOpen(false)} />
         )}
 
         {/* main row — CSS grid with 1fr | auto | 1fr columns so the board
