@@ -481,11 +481,10 @@ export function LessonScreen() {
             style={{
               display: 'flex',
               flexDirection: 'column-reverse',
-              alignItems: 'flex-end',
+              alignItems: 'center',
               justifyContent: 'flex-start',
               height: '100%',
               paddingBottom: 0,
-              paddingRight: 120,
               flex: 1,
               minWidth: 0,
             }}
