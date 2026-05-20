@@ -6,7 +6,7 @@
  * children so the bubble grows downward with them, never pushing the
  * sensei out of his anchor. */
 
-import type { ReactNode } from 'react';
+import type { CSSProperties, ReactNode } from 'react';
 import { IconMic } from './icons';
 import { DOJO_RED, INK, PARCHMENT_DARK, PARCHMENT_LIGHT } from '@/constants/theme';
 
@@ -18,6 +18,57 @@ interface SpeechBubbleProps {
   /** Interactive content (NumberPad, QuestionPanel, Continue button) rendered
    *  inside the bubble below the line. The bubble grows to fit. */
   children?: ReactNode;
+}
+
+/* Inline stacked fraction — numerator / denominator with a real
+ * horizontal bar instead of a text slash. Used by renderRichText below to
+ * upgrade any "n/d" pattern in the sensei's line into proper notation. */
+const FRACTION_OUTER: CSSProperties = {
+  display: 'inline-flex',
+  flexDirection: 'column',
+  alignItems: 'center',
+  verticalAlign: '-0.45em',
+  margin: '0 0.18em',
+  lineHeight: 1,
+  fontSize: '0.78em',
+  fontWeight: 700,
+};
+const FRACTION_BAR: CSSProperties = {
+  display: 'block',
+  width: '100%',
+  height: 2,
+  background: 'currentColor',
+  margin: '1px 0',
+  borderRadius: 1,
+};
+
+function InlineFraction({ n, d }: { n: string; d: string }) {
+  return (
+    <span style={FRACTION_OUTER} aria-label={`${n} over ${d}`}>
+      <span style={{ padding: '0 0.15em' }}>{n}</span>
+      <span style={FRACTION_BAR} aria-hidden />
+      <span style={{ padding: '0 0.15em' }}>{d}</span>
+    </span>
+  );
+}
+
+/** Split a line of sensei text into plain strings + inline fractions so
+ *  "1/8" and "4/8" render with a real horizontal bar. Only matches simple
+ *  positive integer fractions — won't touch dates ("2026-05") or words. */
+function renderRichText(text: string): ReactNode[] {
+  const parts: ReactNode[] = [];
+  // word-boundary around the fraction so "10/22/2026" isn't split, and an
+  // upper bound on the digits so phone-number-like strings don't match.
+  const re = /(?<![\w/])(\d{1,3})\/(\d{1,3})(?![\w/])/g;
+  let lastIndex = 0;
+  let key = 0;
+  for (let match = re.exec(text); match !== null; match = re.exec(text)) {
+    if (match.index > lastIndex) parts.push(text.slice(lastIndex, match.index));
+    parts.push(<InlineFraction key={key++} n={match[1]} d={match[2]} />);
+    lastIndex = re.lastIndex;
+  }
+  if (lastIndex < text.length) parts.push(text.slice(lastIndex));
+  return parts;
 }
 
 export function SpeechBubble({ text, accent, talking = true, children }: SpeechBubbleProps) {
@@ -88,7 +139,7 @@ export function SpeechBubble({ text, accent, talking = true, children }: SpeechB
           color: INK,
         }}
       >
-        {text}
+        {renderRichText(text)}
       </div>
       {accent && (
         <div

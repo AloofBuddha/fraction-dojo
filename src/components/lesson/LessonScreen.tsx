@@ -47,6 +47,7 @@ import { PauseButton } from './PauseButton';
 import { TopicChip } from './TopicChip';
 import { LessonPane } from './LessonPane';
 import { HintButton } from './HintButton';
+import { BeltUpOverlay } from './BeltUpOverlay';
 import { IconChop, IconGlue, IconSimplify } from './icons';
 import { getUnlockedBelts, markBeltUnlocked } from '@/utils/storage';
 import type { BeltKey } from '@/core/types';
@@ -129,6 +130,11 @@ export function LessonScreen() {
     getUnlockedBelts(),
   );
   const [paneOpen, setPaneOpen] = useState(false);
+  // When the student crosses a belt boundary on advance, the from/to belts
+  // are captured here so the BeltUpOverlay can animate the transition.
+  const [beltUp, setBeltUp] = useState<{ from: BeltKey; to: BeltKey } | null>(
+    null,
+  );
 
   const lesson = LESSONS[lessonIndex];
   const step = lesson?.steps[stepIndex];
@@ -268,6 +274,11 @@ export function LessonScreen() {
       if (nextLesson) {
         enterStep(nextLesson.steps[0]);
         unlockBelt(nextLesson.belt);
+        // Crossing a belt boundary — surface the belt-up overlay so the
+        // student sees the rank change as a discrete celebration.
+        if (lesson && lesson.belt !== nextLesson.belt) {
+          setBeltUp({ from: lesson.belt, to: nextLesson.belt });
+        }
       }
     }
     resetTransients();
@@ -453,6 +464,14 @@ export function LessonScreen() {
           onJump={jumpToLesson}
           onClose={() => setPaneOpen(false)}
         />
+
+        {beltUp && (
+          <BeltUpOverlay
+            from={beltUp.from}
+            to={beltUp.to}
+            onDone={() => setBeltUp(null)}
+          />
+        )}
 
         {/* main row — CSS grid with 1fr | auto | 1fr columns so the board
             (auto) sits dead-centre between two equal-width gutters
@@ -687,9 +706,10 @@ export function LessonScreen() {
               Your Tools
             </div>
 
-            {/* TEMP: all three tool slots are forced visible to verify
-             *  the column has room for them. Restore the visibility gate
-             *  (revealed.has(...) ? 'visible' : 'hidden') before shipping. */}
+            {/* Three tool slots are always rendered (space reserved) but
+             *  only revealed once the curriculum introduces them — the
+             *  visibility:hidden gate keeps the column from shifting when
+             *  a new tool unlocks. */}
             <div
               style={{
                 marginTop: 16,
@@ -700,37 +720,43 @@ export function LessonScreen() {
                 width: 144,
               }}
             >
-              <ToolButton
-                label="Chop"
-                hint="Splits a piece in two"
-                active={tool === 'chop'}
-                disabled={!chopEnabled}
-                onClick={() => selectTool('chop')}
-              >
-                <IconChop size={40} />
-              </ToolButton>
+              <div style={{ visibility: revealed.has('chop') ? 'visible' : 'hidden' }}>
+                <ToolButton
+                  label="Chop"
+                  hint="Splits a piece in two"
+                  active={tool === 'chop'}
+                  disabled={!chopEnabled}
+                  onClick={() => selectTool('chop')}
+                >
+                  <IconChop size={40} />
+                </ToolButton>
+              </div>
 
-              <ToolButton
-                label="Glue"
-                hint="Fuses two pieces into one"
-                accent={TOOL_ACCENT_GLUE}
-                active={tool === 'glue'}
-                disabled={!glueEnabled}
-                onClick={() => selectTool('glue')}
-              >
-                <IconGlue size={40} />
-              </ToolButton>
+              <div style={{ visibility: revealed.has('glue') ? 'visible' : 'hidden' }}>
+                <ToolButton
+                  label="Glue"
+                  hint="Fuses two pieces into one"
+                  accent={TOOL_ACCENT_GLUE}
+                  active={tool === 'glue'}
+                  disabled={!glueEnabled}
+                  onClick={() => selectTool('glue')}
+                >
+                  <IconGlue size={40} />
+                </ToolButton>
+              </div>
 
-              <ToolButton
-                label="Simplify"
-                hint="Reduces a piece to lower terms"
-                accent={TOOL_ACCENT_SIMPLIFY}
-                active={tool === 'simplify'}
-                disabled={!simplifyEnabled}
-                onClick={() => selectTool('simplify')}
-              >
-                <IconSimplify size={38} />
-              </ToolButton>
+              <div style={{ visibility: revealed.has('simplify') ? 'visible' : 'hidden' }}>
+                <ToolButton
+                  label="Simplify"
+                  hint="Reduces a piece to lower terms"
+                  accent={TOOL_ACCENT_SIMPLIFY}
+                  active={tool === 'simplify'}
+                  disabled={!simplifyEnabled}
+                  onClick={() => selectTool('simplify')}
+                >
+                  <IconSimplify size={38} />
+                </ToolButton>
+              </div>
             </div>
           </div>
         </div>

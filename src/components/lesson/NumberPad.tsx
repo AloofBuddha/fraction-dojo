@@ -7,7 +7,7 @@
  * (managed by the parent) glows in the same colour. */
 
 import type { CSSProperties } from 'react';
-import { DOJO_RED, INK, PARCHMENT_DARK, PARCHMENT_LIGHT } from '@/constants/theme';
+import { INK } from '@/constants/theme';
 
 export interface NumberPadSlot {
   /** The number currently placed in the slot, or null if empty. */
@@ -108,15 +108,13 @@ function Slot({
   );
 }
 
+// NumberPad sits naturally on the speech bubble's parchment — no border
+// or background of its own to avoid the box-within-box look.
 const CARD: CSSProperties = {
   display: 'flex',
   flexDirection: 'column',
-  gap: 14,
-  padding: '14px 18px',
-  borderRadius: 20,
-  background: `linear-gradient(180deg, ${PARCHMENT_LIGHT} 0%, ${PARCHMENT_DARK} 100%)`,
-  border: `3px solid ${INK}`,
-  boxShadow: `0 0 0 3px ${DOJO_RED}, 0 8px 16px rgba(0,0,0,0.22)`,
+  gap: 12,
+  paddingTop: 4,
 };
 const FRACTION_COL: CSSProperties = {
   display: 'flex',
