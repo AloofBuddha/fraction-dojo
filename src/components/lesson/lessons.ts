@@ -191,7 +191,7 @@ export const LESSONS: readonly Lesson[] = [
         instruction:
           'Your first challenge. Tap the Chop tool, then tap the board to split it into two equal parts.',
         successLine:
-          'One chop, two halves! Each part is called a HALF — written 1/2.',
+          'One chop, two EQUAL halves — both pieces exactly the same size. That is what "equal" means. Each is a HALF, written 1/2.',
         startBoard: createBoard(),
         goalBoard: twoHalves(),
         allowedTools: ['chop'],
@@ -335,7 +335,8 @@ export const LESSONS: readonly Lesson[] = [
         kind: 'board',
         instruction:
           'Halve a quarter — pick any one piece and chop it. Let us see what we get.',
-        successLine: 'Halve a quarter and you get an EIGHTH — 1/8.',
+        successLine:
+          'Halve a quarter and you get an EIGHTH — 1/8. Notice — an eighth is SMALLER than a quarter. The more cuts you make, the smaller each piece. So 1/8 is smaller than 1/4.',
         startBoard: fourQuarters(),
         goalBoard: fourQuartersWithOneChopped(),
         allowedTools: ['chop'],
@@ -354,6 +355,20 @@ export const LESSONS: readonly Lesson[] = [
         correctLine: 'One eighth — 1/8. One of eight parts.',
         wrongLine: 'One piece of eight — write it 1 over 8.',
         hints: ['Top is parts you have (1). Bottom is total parts (8).'],
+      },
+      {
+        kind: 'question',
+        instruction:
+          'Two eighths sit side by side and cover the same space as one quarter. What fraction of the whole is two eighths?',
+        scratchBoard: fourQuartersWithOneChopped(),
+        isCorrect: (answer) => areEquivalent(answer, fraction(1, 4)),
+        correctLine:
+          'Two eighths = 1/4. An eighth is smaller, but two of them rebuild a quarter.',
+        wrongLine:
+          'Two eighths cover one quarter — write the fraction that names one quarter, or 2/8 (the same amount).',
+        hints: [
+          'Count two eighths on the board — together they fill one quarter.',
+        ],
       },
     ],
   },
@@ -438,21 +453,22 @@ export const LESSONS: readonly Lesson[] = [
             options: [1, 2, 3, 4],
             slots: [
               {
-                prompt: 'Three of four — top is parts you have.',
+                prompt: 'Three of four — the top is the NUMERATOR (parts you have).',
                 correctValue: 3,
                 wrongLine: 'Count the yellow slices — three.',
                 color: NUM_COLOR,
                 highlightPieces: THREE_QUARTERS,
               },
               {
-                prompt: 'And bottom is parts in total.',
+                prompt: 'And the bottom is the DENOMINATOR (parts in total).',
                 correctValue: 4,
                 wrongLine: 'Count every piece in the blue box — four.',
                 color: DEN_COLOR,
                 highlightPieces: ALL_QUARTERS,
               },
             ],
-            correctLine: 'Three over four — 3/4. Three of four equal parts.',
+            correctLine:
+              'Three over four — 3/4. Numerator three, denominator four — three of four equal parts.',
           },
         ],
       },
@@ -571,7 +587,7 @@ export const LESSONS: readonly Lesson[] = [
         instruction:
           'Now build it yourself. The stone master on the left is 1/2. Glue your two quarters into one piece the same size.',
         successLine:
-          'Two quarters glued — 2/4. The SAME SIZE as the master 1/2. Two names, one amount — they are EQUIVALENT!',
+          'Two quarters glued — 2/4 (numerator 2, denominator 4). The SAME SIZE as the master 1/2. Two names, one amount — 1/2 and 2/4 are EQUIVALENT fractions.',
         startBoard: masterAndTwoQuarters(),
         goalBoard: masterAndTwoFourths(),
         allowedTools: ['glue'],
@@ -702,7 +718,7 @@ export const LESSONS: readonly Lesson[] = [
         instruction:
           'This piece is 4/8. Simplify it step by step until it cannot get any simpler.',
         successLine:
-          '4/8 → 2/4 → 1/2. All three are the same amount — 1/2 is its simplest name.',
+          '4/8 → 2/4 → 1/2. Each step halves both numerator and denominator. All three are the same amount — 1/2 is its simplest name.',
         startBoard: masterAndFourEighthsGlued(),
         goalBoard: masterAndFreeHalf(),
         allowedTools: ['simplify'],

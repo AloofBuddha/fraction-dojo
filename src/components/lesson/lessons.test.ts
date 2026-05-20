@@ -92,6 +92,15 @@ describe('Yellow Belt — sharper cuts to quarters and eighths', () => {
     expect(q.isCorrect(fraction(2, 16))).toBe(true);
     expect(q.isCorrect(fraction(1, 4))).toBe(false);
   });
+
+  // The size-comparison question — two eighths cover the same space as one
+  // quarter. Accepts 1/4 (or 2/8, since they're equivalent).
+  it('P4: the size-comparison question accepts 1/4 (and equivalents)', () => {
+    const q = questionStep(yb.steps[3]);
+    expect(q.isCorrect(fraction(1, 4))).toBe(true);
+    expect(q.isCorrect(fraction(2, 8))).toBe(true);
+    expect(q.isCorrect(fraction(1, 8))).toBe(false);
+  });
 });
 
 describe('Orange Belt — reading a fraction', () => {

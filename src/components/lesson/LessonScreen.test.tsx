@@ -24,7 +24,7 @@ test('chopping the whole board shows the success line', async () => {
   render(<LessonScreen />);
   await user.click(screen.getByRole('button', { name: /chop/i }));
   await user.click(screen.getByRole('button', { name: '1/1 piece' }));
-  expect(await screen.findByText(/two halves/i)).toBeInTheDocument();
+  expect(await screen.findByText(/two equal halves/i)).toBeInTheDocument();
 });
 
 // Tools reveal progressively — Glue is not on screen during the first puzzle.
