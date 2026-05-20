@@ -4,7 +4,7 @@
  * as mission-select; for the MVP it shows the single lesson. Ported/adapted
  * from the Claude Design handoff (claude.ai/design). */
 
-import { BELT_RANKS } from './belts';
+import { BELT_COLORS, BELT_RANKS } from '@/constants/theme';
 
 interface BeltBarProps {
   /** Which belt the student is on — also which tile is highlighted. */
@@ -34,6 +34,7 @@ export function BeltBar({ rankIndex = 0, label }: BeltBarProps) {
         {BELT_RANKS.map((rank, index) => {
           const past = index < rankIndex;
           const active = index === rankIndex;
+          const swatch = BELT_COLORS[rank.key];
           return (
             <div
               key={rank.key}
@@ -42,8 +43,8 @@ export function BeltBar({ rankIndex = 0, label }: BeltBarProps) {
                 width: active ? 26 : 18,
                 height: active ? 26 : 18,
                 borderRadius: 6,
-                background: rank.color,
-                border: `2px solid ${rank.trim}`,
+                background: swatch.color,
+                border: `2px solid ${swatch.trim}`,
                 transform: active ? 'rotate(45deg)' : 'none',
                 boxShadow: active
                   ? '0 0 0 3px rgba(255, 220, 150, 0.55), 0 0 18px rgba(255, 220, 150, 0.6)'

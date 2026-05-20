@@ -1,13 +1,10 @@
-import {
-  fraction,
-  toValue,
-  simplify,
-  areEquivalent,
-  add,
-  format,
-} from './fraction';
+import { fraction, toValue, simplify, areEquivalent } from './fraction';
 
 describe('fraction()', () => {
+  it('builds a Fraction from well-formed integers', () => {
+    expect(fraction(3, 8)).toEqual({ numerator: 3, denominator: 8 });
+  });
+
   it('rejects a zero denominator', () => {
     // A fraction over zero is undefined — constructing one is a programming bug.
     expect(() => fraction(1, 0)).toThrow();
@@ -48,6 +45,13 @@ describe('simplify()', () => {
     expect(simplify(fraction(1, -2))).toEqual(fraction(-1, 2));
     expect(simplify(fraction(-1, -2))).toEqual(fraction(1, 2));
   });
+
+  it('produces the same canonical form for any equivalent input', () => {
+    // The lesson chain 4/8 = 2/4 = 1/2 — all simplify to the same value object.
+    const canonical = simplify(fraction(1, 2));
+    expect(simplify(fraction(2, 4))).toEqual(canonical);
+    expect(simplify(fraction(4, 8))).toEqual(canonical);
+  });
 });
 
 describe('areEquivalent()', () => {
@@ -63,32 +67,3 @@ describe('areEquivalent()', () => {
   });
 });
 
-describe('add()', () => {
-  it('adds two fractions and reduces the result to lowest terms', () => {
-    // 1/4 + 1/4 = 1/2 exactly. Reducing keeps denominators from growing without
-    // bound when add() is folded over many pieces.
-    expect(add(fraction(1, 4), fraction(1, 4))).toEqual(fraction(1, 2));
-  });
-
-  it('adds fractions with unlike denominators', () => {
-    // 1/2 + 1/4 = 3/4
-    expect(add(fraction(1, 2), fraction(1, 4))).toEqual(fraction(3, 4));
-  });
-
-  it('stays exact for thirds — where float division could not', () => {
-    // 1/3 + 1/3 + 1/3 is exactly one whole; 0.333... summed three times is not.
-    const oneThird = fraction(1, 3);
-    const total = add(add(oneThird, oneThird), oneThird);
-    expect(areEquivalent(total, fraction(1, 1))).toBe(true);
-  });
-
-  it('treats 0/1 as the identity', () => {
-    expect(add(fraction(0, 1), fraction(3, 8))).toEqual(fraction(3, 8));
-  });
-});
-
-describe('format()', () => {
-  it('renders a fraction as "n/d"', () => {
-    expect(format(fraction(3, 8))).toBe('3/8');
-  });
-});

@@ -41,6 +41,16 @@ describe('unionRect()', () => {
       unionRect({ x: 0, y: 0, w: 0.25, h: 1 }, { x: 0.75, y: 0, w: 0.25, h: 1 }),
     ).toBeUndefined();
   });
+
+  it('is commutative — the same union regardless of argument order', () => {
+    // Covers the "b-then-a" branches that the happy-path tests do not hit.
+    const left = { x: 0, y: 0, w: 0.5, h: 1 };
+    const right = { x: 0.5, y: 0, w: 0.5, h: 1 };
+    expect(unionRect(right, left)).toEqual(unionRect(left, right));
+    const top = { x: 0, y: 0, w: 1, h: 0.5 };
+    const bottom = { x: 0, y: 0.5, w: 1, h: 0.5 };
+    expect(unionRect(bottom, top)).toEqual(unionRect(top, bottom));
+  });
 });
 
 describe('seamBetween()', () => {
@@ -66,5 +76,16 @@ describe('seamBetween()', () => {
     const top = { x: 0, y: 0, w: 1, h: 0.5 };
     const bottom = { x: 0, y: 0.5, w: 1, h: 0.5 };
     expect(seamBetween(bottom, top)).toEqual({ x: 0, y: 0.5, length: 1, vertical: false });
+  });
+
+  it('returns the seam at the actual coordinates, not the origin', () => {
+    // Two side-by-side rects translated away from (0,0) — guards against a
+    // regression that hardcoded x:0 or y:0 in the seam's position.
+    expect(
+      seamBetween(
+        { x: 0.25, y: 0.5, w: 0.25, h: 0.25 },
+        { x: 0.5, y: 0.5, w: 0.25, h: 0.25 },
+      ),
+    ).toEqual({ x: 0.5, y: 0.5, length: 0.25, vertical: true });
   });
 });

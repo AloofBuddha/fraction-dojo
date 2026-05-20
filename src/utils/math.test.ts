@@ -24,4 +24,10 @@ describe('approxEqual()', () => {
   it('is false for clearly different numbers', () => {
     expect(approxEqual(0.5, 0.75)).toBe(false);
   });
+
+  it('treats values exactly epsilon apart as equal (inclusive boundary)', () => {
+    // The conventional definition is "within tolerance" — inclusive at epsilon.
+    expect(approxEqual(0, 1e-9)).toBe(true);
+    expect(approxEqual(0, 2e-9)).toBe(false);
+  });
 });

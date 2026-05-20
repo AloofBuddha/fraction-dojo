@@ -10,6 +10,7 @@ export type SoundName =
   | 'glue'
   | 'simplify'
   | 'success'
+  | 'correct'
   | 'wrong'
   | 'beltUp'
   | 'continue'
@@ -89,6 +90,12 @@ const SOUNDS: Record<SoundName, () => void> = {
     tone({ freq: 990, dur: 0.2, delay: 0.08, gain: 0.1 });
   },
   success: () => arpeggio([523, 659, 784], 0.1, 0.22, 0.15),
+  // A bright two-note chirp — small, encouraging, distinct from the larger
+  // `success` fanfare that plays for a solved board.
+  correct: () => {
+    tone({ freq: 880, dur: 0.08, type: 'triangle', gain: 0.13 });
+    tone({ freq: 1175, dur: 0.12, delay: 0.06, type: 'triangle', gain: 0.12 });
+  },
   wrong: () => tone({ freq: 196, freqEnd: 140, dur: 0.24, gain: 0.15 }),
   beltUp: () => arpeggio([523, 659, 784, 1047], 0.12, 0.3, 0.16),
   continue: () => {
@@ -106,16 +113,24 @@ const SOUNDS: Record<SoundName, () => void> = {
 
 /**
  * Real recordings that override the synth, by name. To use one: drop the file
- * in `public/assets/sounds/` and add its entry here. Any name left out keeps
- * its synthesized sound — `wrong` stays synthesized (its soft tone works well).
+ * in `public/assets/sounds/` and add its entry here. A name may map to a list
+ * of recordings — `playSound` picks one at random per play so a repeated effect
+ * (like the chop "thwack") feels fresh instead of robotic. Any name left out
+ * keeps its synthesized sound — `wrong` stays synthesized (its soft tone works
+ * well).
  */
-const FILES: Partial<Record<SoundName, string>> = {
-  chop: '/assets/sounds/chop.mp3',
+const FILES: Partial<Record<SoundName, string | readonly string[]>> = {
+  chop: ['/assets/sounds/chop.mp3', '/assets/sounds/chop-2.mp3'],
   glue: '/assets/sounds/glue.mp3',
   simplify: '/assets/sounds/simplify.mp3',
   success: '/assets/sounds/fanfare.mp3',
+  correct: '/assets/sounds/correct.mp3',
   beltUp: '/assets/sounds/belt-up.mp3',
 };
+
+function pickFile(entry: string | readonly string[]): string {
+  return typeof entry === 'string' ? entry : entry[Math.floor(Math.random() * entry.length)];
+}
 
 // Per-name playback-volume overrides — anything not listed plays at 0.8.
 const VOLUME: Partial<Record<SoundName, number>> = {
@@ -123,11 +138,13 @@ const VOLUME: Partial<Record<SoundName, number>> = {
 };
 
 // Warm the browser cache and learn each file's real duration at module load,
-// so the first play has no fetch delay.
+// so the first play has no fetch delay. For multi-file entries (chop's two
+// variants), only the first is used to learn duration — they're sized to match.
 const preloaded = new Map<SoundName, HTMLAudioElement>();
 for (const name of Object.keys(FILES) as SoundName[]) {
-  const url = FILES[name];
-  if (!url) continue;
+  const entry = FILES[name];
+  if (!entry) continue;
+  const url = typeof entry === 'string' ? entry : entry[0];
   const element = new Audio(url);
   element.preload = 'auto';
   preloaded.set(name, element);
@@ -140,6 +157,7 @@ const FALLBACK_MS: Record<SoundName, number> = {
   glue: 320,
   simplify: 420,
   success: 700,
+  correct: 180,
   wrong: 300,
   beltUp: 1000,
   continue: 240,
@@ -188,9 +206,9 @@ function playFile(url: string, name: SoundName): void {
 
 /** Play a sound right now — the registered recording, else the synth. */
 function playNow(name: SoundName): void {
-  const file = FILES[name];
-  if (file) {
-    playFile(file, name);
+  const entry = FILES[name];
+  if (entry) {
+    playFile(pickFile(entry), name);
   } else {
     playSynth(name);
   }

@@ -37,7 +37,7 @@ export function IconSimplify({ size = 46 }: IconProps) {
       <path
         d="M 26 30 L 50 52 L 74 30"
         fill="none"
-        stroke="#1f1712"
+        stroke="currentColor"
         strokeWidth="12"
         strokeLinecap="round"
         strokeLinejoin="round"
@@ -45,7 +45,7 @@ export function IconSimplify({ size = 46 }: IconProps) {
       <path
         d="M 26 54 L 50 76 L 74 54"
         fill="none"
-        stroke="#1f1712"
+        stroke="currentColor"
         strokeWidth="12"
         strokeLinecap="round"
         strokeLinejoin="round"

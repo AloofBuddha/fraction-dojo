@@ -14,7 +14,8 @@ export interface Rect {
   readonly h: number;
 }
 
-/** Split a rect into two equal halves, along its longer side. */
+/** Split a rect into two equal halves, along its longer side. A square
+ *  (`w === h`) splits vertically — the `w >= h` tie-break is deterministic. */
 export function splitRect(rect: Rect): [Rect, Rect] {
   const { x, y, w, h } = rect;
   return w >= h
@@ -58,6 +59,10 @@ export interface Seam {
  * The shared edge between two adjacent rects, as a seam line. Orientation is
  * decided by which edge the rects actually meet on — consistent with
  * `unionRect` — rather than guessed from a single coordinate.
+ *
+ * Precondition: the caller must guarantee `a` and `b` are gluable, i.e.
+ * `unionRect(a, b)` is defined. Behaviour is unspecified for non-adjacent or
+ * overlapping rects.
  */
 export function seamBetween(a: Rect, b: Rect): Seam {
   // vertical seam — the rects meet along a shared x-edge (side by side)

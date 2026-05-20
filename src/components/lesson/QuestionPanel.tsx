@@ -3,6 +3,7 @@
  * as a scratchpad, so this panel only carries the answer. */
 
 import type { CSSProperties, KeyboardEvent } from 'react';
+import { DOJO_RED, INK, PARCHMENT_DARK, PARCHMENT_LIGHT } from '@/constants/theme';
 
 interface QuestionPanelProps {
   numerator: string;
@@ -16,13 +17,13 @@ const boxStyle: CSSProperties = {
   width: 76,
   height: 64,
   borderRadius: 12,
-  border: '3px solid #1f1712',
+  border: `3px solid ${INK}`,
   background: '#fff',
   textAlign: 'center',
   fontFamily: 'Fredoka, system-ui, sans-serif',
   fontWeight: 700,
   fontSize: 34,
-  color: '#1f1712',
+  color: INK,
 };
 
 export function QuestionPanel({
@@ -44,9 +45,9 @@ export function QuestionPanel({
         gap: 18,
         padding: '16px 22px',
         borderRadius: 20,
-        background: 'linear-gradient(180deg, #fdf6e2 0%, #f5e7c0 100%)',
-        border: '3px solid #1f1712',
-        boxShadow: '0 0 0 3px #d8453d, 0 8px 16px rgba(0,0,0,0.22)',
+        background: `linear-gradient(180deg, ${PARCHMENT_LIGHT} 0%, ${PARCHMENT_DARK} 100%)`,
+        border: `3px solid ${INK}`,
+        boxShadow: `0 0 0 3px ${DOJO_RED}, 0 8px 16px rgba(0,0,0,0.22)`,
       }}
     >
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
@@ -58,7 +59,7 @@ export function QuestionPanel({
           onKeyDown={onKeyDown}
           style={boxStyle}
         />
-        <div style={{ width: 84, height: 7, borderRadius: 99, background: '#1f1712' }} />
+        <div style={{ width: 84, height: 7, borderRadius: 99, background: INK }} />
         <input
           aria-label="denominator"
           inputMode="numeric"
@@ -74,14 +75,14 @@ export function QuestionPanel({
         style={{
           padding: '12px 24px',
           borderRadius: 999,
-          border: '3px solid #1f1712',
-          background: 'linear-gradient(180deg, #ef6f5a, #d8453d)',
+          border: `3px solid ${INK}`,
+          background: `linear-gradient(180deg, #ef6f5a, ${DOJO_RED})`,
           color: '#fff',
           fontFamily: 'Fredoka, system-ui, sans-serif',
           fontWeight: 700,
           fontSize: 18,
           cursor: 'pointer',
-          boxShadow: '0 4px 0 #1f1712',
+          boxShadow: `0 4px 0 ${INK}`,
         }}
       >
         Check

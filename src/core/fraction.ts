@@ -75,21 +75,3 @@ export function areEquivalent(a: Fraction, b: Fraction): boolean {
   return a.numerator * b.denominator === b.numerator * a.denominator;
 }
 
-/**
- * Add two fractions, e.g. 1/4 + 1/4 = 1/2. The result is reduced to lowest terms.
- *
- * Exact integer math — and reducing keeps the integers small, so folding `add`
- * over many pieces never drifts past the safe-integer range. Correct for any
- * denominators (thirds, fifths, …) with no float error.
- */
-export function add(a: Fraction, b: Fraction): Fraction {
-  return simplify({
-    numerator: a.numerator * b.denominator + b.numerator * a.denominator,
-    denominator: a.denominator * b.denominator,
-  });
-}
-
-/** Human-readable form, e.g. "1/2". */
-export function format(f: Fraction): string {
-  return `${f.numerator}/${f.denominator}`;
-}

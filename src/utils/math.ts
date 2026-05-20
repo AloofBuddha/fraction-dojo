@@ -5,7 +5,9 @@
 
 /**
  * Greatest common divisor of two integers (Euclid's algorithm).
- * Always returns a non-negative result.
+ * Always returns a non-negative result. By convention `gcd(0, 0) === 0` —
+ * callers that divide by the result must guard against it (see
+ * `fraction.ts:simplify`, which uses `gcd(…) || 1`).
  */
 export function gcd(a: number, b: number): number {
   let dividend = Math.abs(a);
@@ -23,5 +25,5 @@ export function gcd(a: number, b: number): number {
  * floating-point coordinates without exact-equality surprises.
  */
 export function approxEqual(a: number, b: number, epsilon = 1e-9): boolean {
-  return Math.abs(a - b) < epsilon;
+  return Math.abs(a - b) <= epsilon;
 }

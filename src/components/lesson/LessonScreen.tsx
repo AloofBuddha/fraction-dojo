@@ -21,15 +21,16 @@ import {
   simplify,
   canSimplify,
   findPiece,
+  canChopFurther,
 } from '@/core/board';
 import type { Step, SubPromptSlot } from '@/core/lesson';
 import { fraction } from '@/core/fraction';
+import { INK, TOOL_ACCENT_GLUE, TOOL_ACCENT_SIMPLIFY } from '@/constants/theme';
 import { BoardView } from './BoardView';
 import { QuestionPanel } from './QuestionPanel';
 import { Confetti } from './Confetti';
 import { GoalPreview } from './GoalPreview';
 import { NumberPad } from './NumberPad';
-import { canChopFurther } from './chop-limit';
 import { playSound } from './sound';
 import { LESSONS } from './lessons';
 import { ToolButton } from './ToolButton';
@@ -188,11 +189,11 @@ export function LessonScreen() {
       setFollowUpFeedback('none');
       if (slotIndex + 1 >= followUp.slots.length) {
         setFollowUpFeedback('right');
-        playSound('continue');
+        playSound('correct');
         window.setTimeout(advanceFollowUp, FOLLOWUP_RIGHT_MS);
       } else {
         setSlotIndex(slotIndex + 1);
-        playSound('select');
+        playSound('correct');
       }
     } else {
       setFollowUpFeedback('wrong');
@@ -429,14 +430,14 @@ export function LessonScreen() {
                   gap: 8,
                   padding: '12px 26px',
                   borderRadius: 999,
-                  border: '3px solid #1f1712',
+                  border: `3px solid ${INK}`,
                   background: 'linear-gradient(180deg, #7ed47f, #4caf50)',
                   color: '#fff',
                   fontFamily: 'Fredoka, system-ui, sans-serif',
                   fontWeight: 700,
                   fontSize: 17,
                   cursor: 'pointer',
-                  boxShadow: '0 5px 0 #1f1712, 0 8px 14px rgba(0,0,0,0.25)',
+                  boxShadow: `0 5px 0 ${INK}, 0 8px 14px rgba(0,0,0,0.25)`,
                 }}
               >
                 <span aria-hidden style={{ fontSize: 20, lineHeight: 1 }}>
@@ -555,7 +556,7 @@ export function LessonScreen() {
                 <ToolButton
                   label="Glue"
                   hint="Fuses two pieces into one"
-                  accent="#f3b13a"
+                  accent={TOOL_ACCENT_GLUE}
                   active={tool === 'glue'}
                   disabled={!glueEnabled}
                   onClick={() => selectTool('glue')}
@@ -568,7 +569,7 @@ export function LessonScreen() {
                 <ToolButton
                   label="Simplify"
                   hint="Reduces a piece to lower terms"
-                  accent="#5fb24a"
+                  accent={TOOL_ACCENT_SIMPLIFY}
                   active={tool === 'simplify'}
                   disabled={!simplifyEnabled}
                   onClick={() => selectTool('simplify')}

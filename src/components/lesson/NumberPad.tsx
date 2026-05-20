@@ -7,6 +7,7 @@
  * (managed by the parent) glows in the same colour. */
 
 import type { CSSProperties } from 'react';
+import { DOJO_RED, INK, PARCHMENT_DARK, PARCHMENT_LIGHT } from '@/constants/theme';
 
 export interface NumberPadSlot {
   /** The number currently placed in the slot, or null if empty. */
@@ -77,7 +78,7 @@ function Slot({
   focused: boolean;
   onClick: () => void;
 }) {
-  const color = slot.color ?? '#1f1712';
+  const color = slot.color ?? INK;
   const style: CSSProperties = {
     width: 68,
     height: 56,
@@ -87,7 +88,7 @@ function Slot({
     fontFamily: 'Fredoka, system-ui, sans-serif',
     fontWeight: 700,
     fontSize: 30,
-    color: '#1f1712',
+    color: INK,
     cursor: 'pointer',
     boxSizing: 'border-box',
     transition: 'box-shadow 200ms ease',
@@ -113,9 +114,9 @@ const CARD: CSSProperties = {
   gap: 14,
   padding: '14px 18px',
   borderRadius: 20,
-  background: 'linear-gradient(180deg, #fdf6e2 0%, #f5e7c0 100%)',
-  border: '3px solid #1f1712',
-  boxShadow: '0 0 0 3px #d8453d, 0 8px 16px rgba(0,0,0,0.22)',
+  background: `linear-gradient(180deg, ${PARCHMENT_LIGHT} 0%, ${PARCHMENT_DARK} 100%)`,
+  border: `3px solid ${INK}`,
+  boxShadow: `0 0 0 3px ${DOJO_RED}, 0 8px 16px rgba(0,0,0,0.22)`,
 };
 const FRACTION_COL: CSSProperties = {
   display: 'flex',
@@ -127,7 +128,7 @@ const BAR: CSSProperties = {
   width: 78,
   height: 6,
   borderRadius: 99,
-  background: '#1f1712',
+  background: INK,
 };
 const PALETTE: CSSProperties = {
   display: 'flex',
@@ -139,12 +140,12 @@ const TILE: CSSProperties = {
   width: 52,
   height: 52,
   borderRadius: 99,
-  border: '3px solid #1f1712',
+  border: `3px solid ${INK}`,
   background: 'linear-gradient(180deg, #f6ecd6, #e3cea0)',
   fontFamily: 'Fredoka, system-ui, sans-serif',
   fontWeight: 700,
   fontSize: 24,
-  color: '#1f1712',
+  color: INK,
   cursor: 'pointer',
-  boxShadow: '0 4px 0 #1f1712',
+  boxShadow: `0 4px 0 ${INK}`,
 };

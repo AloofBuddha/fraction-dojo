@@ -2,6 +2,7 @@
  * Ported from the Claude Design handoff (claude.ai/design). */
 
 import type { MouseEvent, ReactNode } from 'react';
+import { DOJO_RED, INK } from '@/constants/theme';
 
 interface ToolButtonProps {
   label: string;
@@ -18,7 +19,7 @@ export function ToolButton({
   hint,
   active = false,
   disabled = false,
-  accent = '#d8453d',
+  accent = DOJO_RED,
   onClick,
   children,
 }: ToolButtonProps) {
@@ -51,8 +52,8 @@ export function ToolButton({
         boxShadow: disabled
           ? '0 0 0 3px #6f6a5e, 0 5px 0 #6f6a5e, 0 8px 14px rgba(0,0,0,0.22)'
           : active
-            ? `0 0 0 4px ${accent}, 0 0 0 7px #1f1712, 0 8px 0 #1f1712, 0 0 26px rgba(216, 69, 61, 0.55)`
-            : '0 0 0 3px #1f1712, 0 6px 0 #1f1712, 0 10px 18px rgba(0,0,0,0.25)',
+            ? `0 0 0 4px ${accent}, 0 0 0 7px ${INK}, 0 8px 0 ${INK}, 0 0 26px rgba(216, 69, 61, 0.55)`
+            : `0 0 0 3px ${INK}, 0 6px 0 ${INK}, 0 10px 18px rgba(0,0,0,0.25)`,
         transition: 'transform 80ms ease, box-shadow 120ms ease',
         cursor: disabled ? 'not-allowed' : 'pointer',
         display: 'flex',
@@ -69,7 +70,7 @@ export function ToolButton({
           padding: 6,
           boxShadow: disabled
             ? 'inset 0 0 0 3px #6f6a5e'
-            : 'inset 0 0 0 3px #1f1712, 0 3px 0 rgba(0,0,0,0.18)',
+            : `inset 0 0 0 3px ${INK}, 0 3px 0 rgba(0,0,0,0.18)`,
           filter: disabled ? 'grayscale(0.9)' : 'none',
         }}
       >
@@ -79,7 +80,7 @@ export function ToolButton({
         style={{
           fontWeight: 700,
           fontSize: 18,
-          color: disabled ? '#6f6a5e' : '#1f1712',
+          color: disabled ? '#6f6a5e' : INK,
           letterSpacing: 0.3,
         }}
       >
@@ -111,7 +112,7 @@ export function ToolButton({
             fontSize: 12,
             padding: '4px 10px',
             borderRadius: 999,
-            boxShadow: '0 0 0 2px #1f1712, 0 3px 0 rgba(0,0,0,0.3)',
+            boxShadow: `0 0 0 2px ${INK}, 0 3px 0 rgba(0,0,0,0.3)`,
           }}
         >
           READY

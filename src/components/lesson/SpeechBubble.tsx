@@ -2,6 +2,7 @@
  * Ported from the Claude Design handoff (claude.ai/design). */
 
 import { IconMic } from './icons';
+import { DOJO_RED, INK, PARCHMENT_DARK, PARCHMENT_LIGHT } from '@/constants/theme';
 
 interface SpeechBubbleProps {
   text: string;
@@ -15,13 +16,12 @@ export function SpeechBubble({ text, accent, talking = true }: SpeechBubbleProps
     <div
       style={{
         position: 'relative',
-        backgroundColor: '#fdf6e2',
-        backgroundImage: 'linear-gradient(180deg, #fdf6e2 0%, #f5e7c0 100%)',
+        backgroundColor: PARCHMENT_LIGHT,
+        backgroundImage: `linear-gradient(180deg, ${PARCHMENT_LIGHT} 0%, ${PARCHMENT_DARK} 100%)`,
         borderRadius: 22,
         padding: '20px 22px 22px',
-        border: '4px solid #1f1712',
-        boxShadow:
-          '0 0 0 4px #d8453d, 0 12px 0 rgba(0,0,0,0.22), 0 18px 28px rgba(0,0,0,0.22)',
+        border: `4px solid ${INK}`,
+        boxShadow: `0 0 0 4px ${DOJO_RED}, 0 12px 0 rgba(0,0,0,0.22), 0 18px 28px rgba(0,0,0,0.22)`,
         fontFamily: 'Fredoka, system-ui, sans-serif',
       }}
     >
@@ -33,8 +33,7 @@ export function SpeechBubble({ text, accent, talking = true }: SpeechBubbleProps
           left: 22,
           width: 70,
           height: 22,
-          background:
-            'repeating-linear-gradient(135deg, #d8453d 0 8px, #a82e28 8px 16px)',
+          background: `repeating-linear-gradient(135deg, ${DOJO_RED} 0 8px, #a82e28 8px 16px)`,
           transform: 'rotate(-6deg)',
           borderRadius: 3,
           boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
@@ -64,7 +63,7 @@ export function SpeechBubble({ text, accent, talking = true }: SpeechBubbleProps
             width: 8,
             height: 8,
             borderRadius: 99,
-            background: '#d8453d',
+            background: DOJO_RED,
             animation: talking ? 'dojo-pulse 900ms ease-in-out infinite' : 'none',
           }}
         />
@@ -77,7 +76,7 @@ export function SpeechBubble({ text, accent, talking = true }: SpeechBubbleProps
           fontWeight: 600,
           fontSize: 24,
           lineHeight: 1.2,
-          color: '#1f1712',
+          color: INK,
         }}
       >
         {text}
@@ -113,8 +112,8 @@ export function SpeechBubble({ text, accent, talking = true }: SpeechBubbleProps
       >
         <path
           d="M 5 0 L 43 0 L 24 30 Z"
-          fill="#fdf6e2"
-          stroke="#1f1712"
+          fill={PARCHMENT_LIGHT}
+          stroke={INK}
           strokeWidth="3"
           strokeLinejoin="round"
         />

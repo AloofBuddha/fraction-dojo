@@ -12,6 +12,7 @@
  * Framework-agnostic (no React, no DOM) and unit-testable.
  */
 
+import { SMALLEST_DENOMINATOR } from '@/constants/theme';
 import { type Fraction, fraction } from './fraction';
 import { type Rect, splitRect, unionRect } from './rect';
 
@@ -29,23 +30,41 @@ export interface Board {
   readonly pieces: readonly Piece[];
 }
 
-/** The three operations a student can apply to a piece on the board. */
+/**
+ * The three operations a student can apply to a piece on the board. Reserved
+ * for board-mutating verbs — UI-only "tools" (e.g. inspect, compare) should
+ * define their own enum rather than widen this union.
+ */
 export type Tool = 'chop' | 'glue' | 'simplify';
-
-/** The two labels on a piece — numerator above the bar, denominator below. */
-export type LabelKind = 'numerator' | 'denominator';
 
 /**
  * A piece's id is derived from its rect. Pieces always tile the board, so no
  * two share a rect — the id is therefore unique and fully deterministic, with
  * no id generator to thread through (handy for tests and React keys).
+ *
+ * Safe because every halving stays on exact dyadic rationals (0.5, 0.25, …) —
+ * introducing thirds or fifths would require a normalised serialisation.
  */
 function rectId(rect: Rect): string {
   return `${rect.x}:${rect.y}:${rect.w}:${rect.h}`;
 }
 
+// A piece's rect is its id-source-of-truth — freeze it (and the piece itself)
+// so a stray mutation cannot desynchronise the two.
 function makePiece(value: Fraction, rect: Rect): Piece {
-  return { id: rectId(rect), value, rect };
+  return Object.freeze({
+    id: rectId(rect),
+    value,
+    rect: Object.freeze({ ...rect }),
+  });
+}
+
+// findPiece + throw if missing — every mutating op needs this guard, so
+// hoist it instead of repeating the "if (!piece) throw …" pattern.
+function requirePiece(board: Board, id: string, op: string): Piece {
+  const piece = findPiece(board, id);
+  if (!piece) throw new Error(`${op}(): no piece "${id}"`);
+  return piece;
 }
 
 /** A fresh board: a single whole piece worth 1. */
@@ -65,7 +84,7 @@ export function findPiece(board: Board, id: string): Piece | undefined {
 export function lockPiece(board: Board, id: string): Board {
   return {
     pieces: board.pieces.map((piece) =>
-      piece.id === id ? { ...piece, locked: true } : piece,
+      piece.id === id ? Object.freeze({ ...piece, locked: true }) : piece,
     ),
   };
 }
@@ -83,23 +102,37 @@ export function halfValue(value: Fraction): Fraction {
 }
 
 /**
+ * Whether a piece of this value can still be chopped within the size limit.
+ * A puzzle may pass a tighter `limit` denominator (e.g. 4 to stop at quarters)
+ * so the student cannot over-chop into an unrecoverable state. The default,
+ * SMALLEST_DENOMINATOR, is the global UX ceiling defined in `@/constants/theme`.
+ *
+ * This is a query, not a mutation — `chop()` itself remains mathematically
+ * unbounded, so unit tests can construct arbitrarily fine boards.
+ */
+export function canChopFurther(
+  value: Fraction,
+  limit: number = SMALLEST_DENOMINATOR,
+): boolean {
+  return halfValue(value).denominator <= limit;
+}
+
+/**
  * Chop a piece into two equal halves — split along its longer side so the
  * pieces stay roughly square. Throws if the piece does not exist.
+ *
+ * The two children are spliced in at the parent's index so reading order
+ * tracks board layout, not chop history.
  */
 export function chop(board: Board, id: string): Board {
-  const piece = findPiece(board, id);
-  if (!piece) {
-    throw new Error(`chop(): no piece "${id}"`);
-  }
+  const piece = requirePiece(board, id, 'chop');
   if (piece.locked) {
     throw new Error(`chop(): piece "${id}" is locked`);
   }
   const childValue = halfValue(piece.value);
+  const children = splitRect(piece.rect).map((rect) => makePiece(childValue, rect));
   return {
-    pieces: [
-      ...board.pieces.filter((p) => p.id !== id),
-      ...splitRect(piece.rect).map((rect) => makePiece(childValue, rect)),
-    ],
+    pieces: board.pieces.flatMap((p) => (p.id === id ? children : [p])),
   };
 }
 
@@ -125,38 +158,52 @@ export function canGlue(board: Board, idA: string, idB: string): boolean {
 /**
  * Glue two pieces into one — their numerators add, the denominator is kept
  * (1/4 + 1/4 → 2/4). Throws if they cannot be glued; check `canGlue` first.
+ *
+ * The merged piece takes the slot of whichever input came earlier in the
+ * pieces array, so reading order stays stable across a glue.
  */
 export function glue(board: Board, idA: string, idB: string): Board {
-  const a = findPiece(board, idA);
-  const b = findPiece(board, idB);
-  const rect =
-    a && b && !a.locked && !b.locked && a.value.denominator === b.value.denominator
-      ? unionRect(a.rect, b.rect)
-      : undefined;
-  if (!a || !b || !rect) {
+  if (!canGlue(board, idA, idB)) {
     throw new Error(`glue(): "${idA}" and "${idB}" cannot be glued`);
   }
+  // canGlue established both pieces exist and their rects union — assert.
+  const a = findPiece(board, idA)!;
+  const b = findPiece(board, idB)!;
+  const rect = unionRect(a.rect, b.rect)!;
   const merged = makePiece(
     fraction(a.value.numerator + b.value.numerator, a.value.denominator),
     rect,
   );
-  return {
-    pieces: [
-      ...board.pieces.filter((p) => p.id !== idA && p.id !== idB),
-      merged,
-    ],
-  };
+  const newPieces: Piece[] = [];
+  let inserted = false;
+  for (const p of board.pieces) {
+    if (p.id === idA || p.id === idB) {
+      // Replace the first of the two with `merged`; drop the second.
+      if (!inserted) {
+        newPieces.push(merged);
+        inserted = true;
+      }
+    } else {
+      newPieces.push(p);
+    }
+  }
+  return { pieces: newPieces };
 }
 
-/** Every pair of pieces that can currently be glued — used to place the seams. */
+/** Every pair of pieces that can currently be glued — used to place the seams.
+ *  Inlined over `canGlue` so the locked/denominator filters stay O(n²); the
+ *  generic `canGlue` repeats two findPiece calls per pair, which is O(n³). */
 export function gluablePairs(board: Board): [string, string][] {
   const pairs: [string, string][] = [];
   const { pieces } = board;
   for (let i = 0; i < pieces.length; i++) {
+    const a = pieces[i];
+    if (a.locked) continue;
     for (let j = i + 1; j < pieces.length; j++) {
-      if (canGlue(board, pieces[i].id, pieces[j].id)) {
-        pairs.push([pieces[i].id, pieces[j].id]);
-      }
+      const b = pieces[j];
+      if (b.locked) continue;
+      if (a.value.denominator !== b.value.denominator) continue;
+      if (unionRect(a.rect, b.rect)) pairs.push([a.id, b.id]);
     }
   }
   return pairs;
@@ -180,8 +227,8 @@ export function canSimplify(board: Board, id: string): boolean {
  * which is what makes equivalence visible. Throws if it cannot be simplified.
  */
 export function simplify(board: Board, id: string): Board {
-  const piece = findPiece(board, id);
-  if (!piece || !canSimplify(board, id)) {
+  const piece = requirePiece(board, id, 'simplify');
+  if (!canSimplify(board, id)) {
     throw new Error(`simplify(): "${id}" cannot be simplified`);
   }
   const reduced = fraction(
@@ -189,8 +236,11 @@ export function simplify(board: Board, id: string): Board {
     piece.value.denominator / 2,
   );
   // Spread the original piece so every field (id, rect, locked) is preserved
-  // — only the value changes.
+  // — only the value changes — and freeze the new piece for consistency with
+  // makePiece's invariant.
   return {
-    pieces: board.pieces.map((p) => (p.id === id ? { ...p, value: reduced } : p)),
+    pieces: board.pieces.map((p) =>
+      p.id === id ? Object.freeze({ ...p, value: reduced }) : p,
+    ),
   };
 }

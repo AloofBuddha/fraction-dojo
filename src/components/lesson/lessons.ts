@@ -11,6 +11,7 @@
 
 import { type Board, createBoard, chop, glue, lockPiece } from '@/core/board';
 import type { Lesson } from '@/core/lesson';
+import { DEN_COLOR, NUM_COLOR } from '@/constants/theme';
 
 // Deterministic piece ids — "x:y:w:h" of the piece's rect.
 const WHOLE = '0:0:1:1';
@@ -28,11 +29,6 @@ const ALL_QUARTERS: readonly string[] = [
   '0.5:0:0.5:0.5',
   '0.5:0.5:0.5:0.5',
 ];
-
-// Slot colours — same scheme across the curriculum so the colour-coding
-// becomes a teaching language.
-const NUM_COLOR = '#f3b13a'; // yellow — "parts you have"
-const DEN_COLOR = '#5ba5d9'; // blue — "parts in total"
 
 /** Two halves, the left one locked as the puzzle's "master" 1/2. */
 function masterAndFreeHalf(): Board {

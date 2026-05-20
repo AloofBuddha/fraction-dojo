@@ -6,13 +6,14 @@
 
 import { useState } from "react";
 import type { CSSProperties } from "react";
-import { createBoard, type LabelKind } from "@/core/board";
-import { BoardView } from "./BoardView";
+import { createBoard } from "@/core/board";
+import { BoardView, type LabelKind } from "./BoardView";
 import { Sensei } from "./Sensei";
 import { SpeechBubble } from "./SpeechBubble";
 import { DojoBackground } from "./DojoBackground";
 import { PauseButton } from "./PauseButton";
 import { playSound } from "./sound";
+import { DOJO_RED, INK, PARCHMENT_LIGHT } from "@/constants/theme";
 import "@/styles/dojo.css";
 
 // One whole, shown unchanged through the "what is a fraction" beats.
@@ -158,8 +159,8 @@ export function IntroScene({ onDone }: IntroSceneProps) {
                 fontFamily: "Fredoka, system-ui, sans-serif",
                 fontWeight: 600,
                 fontSize: "clamp(24px, 3vw, 42px)",
-                color: "#fdf6e2",
-                textShadow: "0 3px 0 #1f1712, 0 8px 16px rgba(0,0,0,0.45)",
+                color: PARCHMENT_LIGHT,
+                textShadow: `0 3px 0 ${INK}, 0 8px 16px rgba(0,0,0,0.45)`,
                 letterSpacing: 1,
                 marginBottom: 4,
               }}
@@ -171,8 +172,8 @@ export function IntroScene({ onDone }: IntroSceneProps) {
                 fontFamily: "Fredoka, system-ui, sans-serif",
                 fontWeight: 700,
                 fontSize: "clamp(56px, 9vw, 112px)",
-                color: "#fdf6e2",
-                textShadow: "0 6px 0 #1f1712, 0 14px 28px rgba(0,0,0,0.5)",
+                color: PARCHMENT_LIGHT,
+                textShadow: `0 6px 0 ${INK}, 0 14px 28px rgba(0,0,0,0.5)`,
                 letterSpacing: 1,
                 lineHeight: 1.05,
               }}
@@ -267,26 +268,26 @@ const CONTINUE_BUTTON: CSSProperties = {
   gap: 8,
   padding: "12px 26px",
   borderRadius: 999,
-  border: "3px solid #1f1712",
+  border: `3px solid ${INK}`,
   background: "linear-gradient(180deg, #7ed47f, #4caf50)",
   color: "#fff",
   fontFamily: "Fredoka, system-ui, sans-serif",
   fontWeight: 700,
   fontSize: 17,
   cursor: "pointer",
-  boxShadow: "0 5px 0 #1f1712, 0 8px 14px rgba(0,0,0,0.25)",
+  boxShadow: `0 5px 0 ${INK}, 0 8px 14px rgba(0,0,0,0.25)`,
 };
 
 const BEGIN_BUTTON: CSSProperties = {
   marginTop: 36,
   padding: "14px 44px",
   borderRadius: 999,
-  border: "3px solid #1f1712",
-  background: "linear-gradient(180deg, #ef6f5a, #d8453d)",
+  border: `3px solid ${INK}`,
+  background: `linear-gradient(180deg, #ef6f5a, ${DOJO_RED})`,
   color: "#fff",
   fontFamily: "Fredoka, system-ui, sans-serif",
   fontWeight: 700,
   fontSize: 22,
   cursor: "pointer",
-  boxShadow: "0 6px 0 #1f1712, 0 10px 18px rgba(0,0,0,0.3)",
+  boxShadow: `0 6px 0 ${INK}, 0 10px 18px rgba(0,0,0,0.3)`,
 };

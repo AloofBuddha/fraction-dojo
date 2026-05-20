@@ -3,20 +3,10 @@
  * than the small replica of the big board. */
 
 import type { Board } from '@/core/board';
-
-// Colour per denominator, matching the dojo's piece styles in dojo.css.
-const PIECE_FILL: Record<number, string> = {
-  1: '#d2a273',
-  2: '#e85f4e',
-  4: '#f3b13a',
-  8: '#7ab560',
-  16: '#5ba5d9',
-  32: '#a586d4',
-  64: '#e87fb4',
-};
+import { INK, PIECE_FILL_BY_DENOMINATOR } from '@/constants/theme';
 
 function fillFor(denominator: number): string {
-  return PIECE_FILL[denominator] ?? PIECE_FILL[64];
+  return PIECE_FILL_BY_DENOMINATOR[denominator] ?? PIECE_FILL_BY_DENOMINATOR[64];
 }
 
 interface GoalPreviewProps {
@@ -55,9 +45,9 @@ export function GoalPreview({ board }: GoalPreviewProps) {
           width: 140,
           height: 140,
           background: '#8a5224',
-          border: '3px solid #1f1712',
+          border: `3px solid ${INK}`,
           borderRadius: 8,
-          boxShadow: '0 4px 0 #1f1712',
+          boxShadow: `0 4px 0 ${INK}`,
           overflow: 'hidden',
         }}
       >
@@ -79,7 +69,7 @@ export function GoalPreview({ board }: GoalPreviewProps) {
                 width: '100%',
                 height: '100%',
                 background: fillFor(piece.value.denominator),
-                border: '2px solid #1f1712',
+                border: `2px solid ${INK}`,
                 borderRadius: 4,
               }}
             />

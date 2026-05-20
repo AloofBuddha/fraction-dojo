@@ -4,8 +4,8 @@
  * belongs outside render). */
 
 import type { CSSProperties } from 'react';
+import { CONFETTI_PALETTE } from '@/constants/theme';
 
-const COLORS = ['#e85f4e', '#f3b13a', '#7ab560', '#5ba5d9', '#e87fb4', '#fdf6e2', '#fff5c8'];
 const BURST_COUNT = 5;
 const PARTICLES_PER_BURST = 14;
 
@@ -29,7 +29,7 @@ const BURSTS: Burst[] = Array.from({ length: BURST_COUNT }, (_, i) => {
     return {
       dx: Math.cos(angle) * dist,
       dy: Math.sin(angle) * dist,
-      color: COLORS[(i * 3 + j) % COLORS.length],
+      color: CONFETTI_PALETTE[(i * 3 + j) % CONFETTI_PALETTE.length],
     };
   });
   return {

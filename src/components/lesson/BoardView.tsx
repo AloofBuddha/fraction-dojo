@@ -13,14 +13,19 @@ import {
   type Board,
   type Rect,
   type Tool,
-  type LabelKind,
   findPiece,
   gluablePairs,
+  canChopFurther,
 } from '@/core/board';
 import { type Seam, seamBetween } from '@/core/rect';
-import { canChopFurther } from './chop-limit';
+import { GLOW_GOLD } from '@/constants/theme';
 
 export type { Tool };
+
+/** The two labels on a piece — numerator above the bar, denominator below.
+ *  Lives here (not in core/board) because it's a UI concern: the model has no
+ *  notion of how a piece is rendered. */
+export type LabelKind = 'numerator' | 'denominator';
 
 /* ─── piece styling ──────────────────────────────────────────────────── */
 
@@ -37,9 +42,6 @@ const PIECE_STYLES: Record<number, { fill: string; edge: string }> = {
 function pieceStyle(denominator: number) {
   return PIECE_STYLES[denominator] ?? PIECE_STYLES[64];
 }
-
-// A locked "master" piece — carved stone, not painted wood.
-const STONE_STYLE = { fill: '#9a948a', edge: '#56524b' };
 
 /* ─── one piece ──────────────────────────────────────────────────────── */
 
@@ -70,7 +72,9 @@ function PieceView({
   onLabelTap,
   onTap,
 }: PieceViewProps) {
-  const style = locked ? STONE_STYLE : pieceStyle(denominator);
+  // A locked piece keeps its wood look — the lock badge below is the only
+  // visual cue it's untouchable, so it matches the goal-preview thumbnail.
+  const style = pieceStyle(denominator);
   // A chop cuts along the piece's longer side.
   const cutVertical = rect.w >= rect.h;
   const showChopLine =
@@ -105,7 +109,7 @@ function PieceView({
           borderRadius: 10,
           border: `3px solid ${style.edge}`,
           boxShadow: canSimplify
-            ? 'inset 0 3px 0 rgba(255,255,255,0.18), 0 0 0 4px #ffdf80, 0 0 20px rgba(255,220,120,0.75)'
+            ? `inset 0 3px 0 rgba(255,255,255,0.18), 0 0 0 4px ${GLOW_GOLD}, 0 0 20px rgba(255,220,120,0.75)`
             : 'inset 0 3px 0 rgba(255,255,255,0.18), inset 0 -6px 0 rgba(0,0,0,0.10), 0 3px 0 rgba(0,0,0,0.18)',
           overflow: 'hidden',
           display: 'flex',
@@ -114,39 +118,19 @@ function PieceView({
           color: '#fff',
         }}
       >
-        {/* surface texture — speckled stone for a locked piece, else wood grain */}
-        {locked ? (
-          <svg
-            viewBox="0 0 100 100"
-            preserveAspectRatio="none"
-            width="100%"
-            height="100%"
-            aria-hidden
-            style={{ position: 'absolute', inset: 0, zIndex: 0, opacity: 0.55, mixBlendMode: 'multiply' }}
-          >
-            <ellipse cx="26" cy="32" rx="15" ry="10" fill="#000" opacity="0.10" />
-            <ellipse cx="70" cy="22" rx="10" ry="8" fill="#000" opacity="0.13" />
-            <ellipse cx="78" cy="64" rx="16" ry="11" fill="#000" opacity="0.10" />
-            <ellipse cx="38" cy="74" rx="12" ry="9" fill="#000" opacity="0.14" />
-            <ellipse cx="54" cy="50" rx="8" ry="6" fill="#000" opacity="0.10" />
-            <circle cx="62" cy="84" r="3" fill="#000" opacity="0.20" />
-            <circle cx="16" cy="58" r="2.6" fill="#000" opacity="0.20" />
-            <circle cx="88" cy="40" r="2.2" fill="#000" opacity="0.20" />
-          </svg>
-        ) : (
-          <svg
-            viewBox="0 0 100 100"
-            preserveAspectRatio="none"
-            width="100%"
-            height="100%"
-            aria-hidden
-            style={{ position: 'absolute', inset: 0, zIndex: 0, opacity: 0.22, mixBlendMode: 'multiply' }}
-          >
-            <path d="M 0 22 Q 40 26 100 20" stroke="#000" strokeWidth="0.6" fill="none" />
-            <path d="M 0 48 Q 50 44 100 50" stroke="#000" strokeWidth="0.5" fill="none" />
-            <path d="M 0 72 Q 60 78 100 70" stroke="#000" strokeWidth="0.6" fill="none" />
-          </svg>
-        )}
+        {/* faint wood grain — same for every piece, locked or not */}
+        <svg
+          viewBox="0 0 100 100"
+          preserveAspectRatio="none"
+          width="100%"
+          height="100%"
+          aria-hidden
+          style={{ position: 'absolute', inset: 0, zIndex: 0, opacity: 0.22, mixBlendMode: 'multiply' }}
+        >
+          <path d="M 0 22 Q 40 26 100 20" stroke="#000" strokeWidth="0.6" fill="none" />
+          <path d="M 0 48 Q 50 44 100 50" stroke="#000" strokeWidth="0.5" fill="none" />
+          <path d="M 0 72 Q 60 78 100 70" stroke="#000" strokeWidth="0.6" fill="none" />
+        </svg>
 
         {/* lock badge — this piece is the puzzle's fixed master */}
         {locked && (
@@ -302,7 +286,7 @@ function GlueSeamButton({ seam, onTap }: { seam: GlueSeam; onTap: () => void }) 
             ? { top: 8, bottom: 8, left: '50%', width: 14, transform: 'translateX(-7px)' }
             : { left: 8, right: 8, top: '50%', height: 14, transform: 'translateY(-7px)' }),
           borderRadius: 99,
-          background: 'linear-gradient(90deg, #ffdf80, #fff2b0, #ffdf80)',
+          background: `linear-gradient(90deg, ${GLOW_GOLD}, #fff2b0, ${GLOW_GOLD})`,
           boxShadow: '0 0 22px 8px rgba(255, 220, 120, 0.7)',
           pointerEvents: 'none',
         }}

@@ -1,6 +1,8 @@
 /* The dojo set dressing — shoji-screen wall, wooden header beam, hanging
  * plaque, tatami floor. Ported from the Claude Design handoff (claude.ai/design). */
 
+import { INK } from "@/constants/theme";
+
 function BrushGlyph({ d, size = 54 }: { d: string; size?: number }) {
   return (
     <svg
@@ -140,7 +142,7 @@ export function DojoBackground() {
             background: "linear-gradient(180deg, #b73a32 0%, #92281f 100%)",
             borderRadius: 8,
             boxShadow:
-              "inset 0 0 0 4px #f0d9a3, inset 0 0 0 6px #1f1712, 0 8px 16px rgba(0,0,0,0.4)",
+              `inset 0 0 0 4px #f0d9a3, inset 0 0 0 6px ${INK}, 0 8px 16px rgba(0,0,0,0.4)`,
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
@@ -171,7 +173,7 @@ export function DojoBackground() {
             right: 0,
             top: 0,
             height: 4,
-            background: "#1f1712",
+            background: INK,
           }}
         />
       </div>
