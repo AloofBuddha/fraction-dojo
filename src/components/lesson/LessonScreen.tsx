@@ -583,17 +583,19 @@ export function LessonScreen() {
                 onPieceTap={handlePieceTap}
                 onGlue={handleGlue}
               />
-              {/* board's top-right chrome: hint (shows the goal as a popover)
-                  and restart (resets the puzzle's board to its start state).
-                  Both stay visible across all step kinds; the popover only
-                  has content when the step has a goal. */}
+              {/* Hint + Restart chrome — sits OUTSIDE the board's right
+                  edge, stacked vertically at the top corner. Hint shows
+                  the goal as a popover; Restart resets the puzzle's board
+                  to its start state. */}
               {!celebrating && !settling && followUpIndex === null && step && (
                 <div
                   style={{
                     position: 'absolute',
-                    top: 14,
-                    right: 14,
+                    top: 0,
+                    left: '100%',
+                    marginLeft: 12,
                     display: 'flex',
+                    flexDirection: 'column',
                     gap: 8,
                     zIndex: 5,
                   }}
@@ -628,21 +630,22 @@ export function LessonScreen() {
                       playSound('reset');
                     }}
                     style={{
-                      width: 40,
-                      height: 40,
-                      borderRadius: 999,
-                      border: '2px solid #5c3a1e',
-                      background: 'linear-gradient(180deg, #c99a63, #a9743d)',
-                      color: '#3a2412',
+                      width: 44,
+                      height: 44,
+                      borderRadius: 10,
+                      border: 'none',
+                      background:
+                        'radial-gradient(circle at 35% 30%, #f6ecd6 0%, #e0c890 60%, #b08c4a 100%)',
+                      color: INK,
                       fontFamily: 'Fredoka, system-ui, sans-serif',
                       fontWeight: 700,
-                      fontSize: 20,
+                      fontSize: 22,
                       lineHeight: 1,
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
                       cursor: 'pointer',
-                      boxShadow: '0 3px 0 #5c3a1e, 0 4px 10px rgba(0,0,0,0.3)',
+                      boxShadow: `0 0 0 3px ${INK}, 0 4px 0 ${INK}, 0 6px 12px rgba(0,0,0,0.3)`,
                       padding: 0,
                     }}
                   >

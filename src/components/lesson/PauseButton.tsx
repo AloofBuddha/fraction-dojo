@@ -13,7 +13,7 @@ export function PauseButton({ onClick }: { onClick?: () => void }) {
       style={{
         width: 44,
         height: 44,
-        borderRadius: 999,
+        borderRadius: 10,
         background:
           'radial-gradient(circle at 35% 30%, #f6ecd6 0%, #e0c890 60%, #b08c4a 100%)',
         boxShadow: `0 0 0 3px ${INK}, 0 4px 0 ${INK}, 0 6px 12px rgba(0,0,0,0.3)`,

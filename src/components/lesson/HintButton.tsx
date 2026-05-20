@@ -12,12 +12,13 @@ interface HintButtonProps {
 }
 
 const TRIGGER_STYLE: CSSProperties = {
-  width: 40,
-  height: 40,
-  borderRadius: 999,
-  border: '2px solid #5c3a1e',
-  background: 'linear-gradient(180deg, #f6ecd6, #d9b86d)',
-  color: '#3a2412',
+  width: 44,
+  height: 44,
+  borderRadius: 10,
+  border: 'none',
+  background:
+    'radial-gradient(circle at 35% 30%, #f6ecd6 0%, #e0c890 60%, #b08c4a 100%)',
+  color: INK,
   fontFamily: 'Fredoka, system-ui, sans-serif',
   fontWeight: 700,
   fontSize: 22,
@@ -26,14 +27,16 @@ const TRIGGER_STYLE: CSSProperties = {
   alignItems: 'center',
   justifyContent: 'center',
   cursor: 'pointer',
-  boxShadow: '0 3px 0 #5c3a1e, 0 4px 10px rgba(0,0,0,0.3)',
+  boxShadow: `0 0 0 3px ${INK}, 0 4px 0 ${INK}, 0 6px 12px rgba(0,0,0,0.3)`,
   padding: 0,
 };
 
+// Popover anchors to the LEFT of the trigger (i.e. floats over the board
+// area) since the trigger lives in the gutter to the right of the board.
 const POPOVER_STYLE: CSSProperties = {
   position: 'absolute',
-  top: '110%',
-  right: 0,
+  top: 0,
+  right: '110%',
   background: `linear-gradient(180deg, ${PARCHMENT_LIGHT} 0%, ${PARCHMENT_DARK} 100%)`,
   border: `3px solid ${INK}`,
   borderRadius: 14,
