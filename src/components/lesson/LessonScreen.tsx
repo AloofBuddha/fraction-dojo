@@ -486,7 +486,7 @@ export function LessonScreen() {
               alignItems: 'center',
               justifyContent: 'flex-start',
               height: '100%',
-              paddingBottom: 0,
+              paddingBottom: 32,
               minWidth: 0,
             }}
           >
@@ -656,17 +656,14 @@ export function LessonScreen() {
             </div>
           </div>
 
-          {/* tools column — flex:1 right gutter, but with the buttons
-              ALIGNED to the LEFT edge (so they hug the board rather than
-              drifting all the way to the viewport edge). The "YOUR TOOLS"
-              label is absolutely positioned so its Y lines up with the
-              red banner (54px above the main row top of 138). Buttons
-              distribute via space-between so Simplify bottom-aligns with
-              the board's bottom. */}
+          {/* tools column — right grid gutter, buttons LEFT-aligned so
+              they hug the board side. "YOUR TOOLS" header is in normal
+              flow at the top of the column so it lines up with the Hint
+              button at the top of the board. Buttons stack with a fixed
+              rowGap so spacing doesn't grow with viewport height. */}
           <div
             style={{
               minWidth: 0,
-              position: 'relative',
               paddingLeft: 120,
               display: 'flex',
               flexDirection: 'column',
@@ -676,9 +673,6 @@ export function LessonScreen() {
           >
             <div
               style={{
-                position: 'absolute',
-                top: -28,
-                left: 120,
                 width: 144,
                 textAlign: 'center',
                 fontWeight: 700,
@@ -696,11 +690,11 @@ export function LessonScreen() {
              *  (revealed.has(...) ? 'visible' : 'hidden') before shipping. */}
             <div
               style={{
-                flex: 1,
+                marginTop: 16,
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center',
-                justifyContent: 'space-between',
+                rowGap: 20,
                 width: 144,
               }}
             >
