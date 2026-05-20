@@ -87,31 +87,33 @@ export function DojoBackground() {
         <rect x="0" y="0" width="1366" height="640" fill="url(#shoji)" />
       </svg>
 
-      {/* large wooden header beam — the top UI level sits on it */}
+      {/* slim wooden header beam — only as thick as the pause / belt /
+       *  topic chrome on top of it needs. */}
       <div
         style={{
           position: "absolute",
           top: 0,
           left: 0,
           right: 0,
-          height: 112,
+          height: 64,
           background:
             "repeating-linear-gradient(90deg, rgba(0,0,0,0.12) 0px, rgba(0,0,0,0.12) 2px, transparent 2px, transparent 64px)," +
             "linear-gradient(180deg, #a4703f 0%, #7a4a26 55%, #5a3318 100%)",
-          borderBottom: "5px solid #3a2210",
-          boxShadow: "0 10px 22px rgba(0,0,0,0.45)",
+          borderBottom: "4px solid #3a2210",
+          boxShadow: "0 6px 14px rgba(0,0,0,0.4)",
         }}
       />
 
-      {/* hanging plaque — decorative, centered above the board */}
+      {/* hanging plaque — hangs straight off the beam (strings ride just
+       *  inside the beam, the badge clears below). */}
       <div
         style={{
           position: "absolute",
           left: "50%",
-          top: 122,
+          top: 78,
           transform: "translateX(-50%)",
-          width: 260,
-          height: 70,
+          width: 220,
+          height: 56,
           pointerEvents: "none",
         }}
       >

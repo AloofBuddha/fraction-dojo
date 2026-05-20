@@ -408,9 +408,9 @@ export function LessonScreen() {
         {celebrating && <Confetti />}
 
         {/* top bar — pause left, belt+stripes center, topic chip right. The
-            chip is the seat reserved for a future lesson-selector pane; for
-            now it's a static readout of what the student is learning. */}
-        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 112, zIndex: 5 }}>
+            bar is sized to just hold those three chrome pieces; the wood
+            beam in DojoBackground matches this height exactly. */}
+        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 64, zIndex: 5 }}>
           <div
             style={{ position: 'absolute', left: 24, top: '50%', transform: 'translateY(-50%)' }}
           >
@@ -458,18 +458,18 @@ export function LessonScreen() {
           onClose={() => setPaneOpen(false)}
         />
 
-        {/* main row — the board is the centerpiece, sized to fill the
-            available vertical space (capped at 900 so it never gets absurd
-            on 4K). The sensei and tools live in side gutters that absorb
-            whatever horizontal space is left over with flex: 1 each, so the
-            board stays dead-centre under the red plaque on every screen. */}
+        {/* main row — the board is the centerpiece, sized so the breathing
+            ABOVE it (below the hanging plaque) is similar to the breathing
+            BELOW it (above the bottom of the viewport). Sensei and tools
+            live in flex:1 gutters that absorb leftover horizontal space, so
+            the board stays dead-centre under the plaque on every screen. */}
         <div
           style={{
             position: 'absolute',
             left: 0,
             right: 0,
-            top: 200,
-            bottom: 20,
+            top: 184,
+            bottom: 50,
             display: 'flex',
             alignItems: 'stretch',
             zIndex: 2,
@@ -569,7 +569,7 @@ export function LessonScreen() {
             style={{
               display: 'grid',
               placeItems: 'start center',
-              width: 'min(900px, calc(100vh - 220px))',
+              width: 'min(900px, calc(100vh - 234px))',
               flexShrink: 0,
             }}
           >
