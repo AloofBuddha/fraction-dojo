@@ -86,7 +86,10 @@ export function IntroScene({ onDone }: IntroSceneProps) {
     beat.kind === "wait-for-numerator" || beat.kind === "wait-for-denominator";
 
   const advance = () => {
-    playSound(isTitle ? "gong" : "continue");
+    // The gong-on-Begin uses the recorded belt-up file — its low resonant
+    // hit is what the dojo intro needs, while the synthesized 'gong' is
+    // thinner.
+    playSound(isTitle ? "beltUp" : "continue");
     if (isLast) onDone();
     else setIndex(index + 1);
   };
