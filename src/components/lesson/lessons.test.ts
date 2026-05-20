@@ -93,10 +93,19 @@ describe('Yellow Belt — sharper cuts to quarters and eighths', () => {
     expect(q.isCorrect(fraction(1, 4))).toBe(false);
   });
 
-  // The size-comparison question — two eighths cover the same space as one
-  // quarter. Accepts 1/4 (or 2/8, since they're equivalent).
-  it('P4: the size-comparison question accepts 1/4 (and equivalents)', () => {
-    const q = questionStep(yb.steps[3]);
+  // P4 introduces Glue early — the student combines the two 1/8 pieces
+  // back into a single 2/8 (visually a quarter-sized piece).
+  it('P4: glueing the two eighths produces a 2/8 piece', () => {
+    const p = boardStep(yb.steps[3]);
+    expect(p.isComplete(p.startBoard)).toBe(false);
+    const next = glue(p.startBoard, '0.5:0:0.25:0.5', '0.75:0:0.25:0.5');
+    expect(p.isComplete(next)).toBe(true);
+  });
+
+  // P5 reads back the size comparison: two eighths cover one quarter.
+  // Accepts 1/4 or 2/8 (equivalent).
+  it('P5: the size-comparison question accepts 1/4 (and equivalents)', () => {
+    const q = questionStep(yb.steps[4]);
     expect(q.isCorrect(fraction(1, 4))).toBe(true);
     expect(q.isCorrect(fraction(2, 8))).toBe(true);
     expect(q.isCorrect(fraction(1, 8))).toBe(false);
@@ -115,12 +124,15 @@ describe('Orange Belt — reading a fraction', () => {
     expect(p.isComplete(board)).toBe(true);
   });
 
-  // The reading question accepts 3/4 and equivalents only.
-  it('P2: the reading question accepts 3/4 (and equivalents)', () => {
+  // The reading question accepts 2/4 (and equivalents). Orange uses 2/4
+  // rather than 3/4 because three quarters in an L-shape can't form a
+  // single rectangular piece in this engine — the rect highlight bounding
+  // box would over-include the 4th quarter too.
+  it('P2: the reading question accepts 2/4 (and equivalents)', () => {
     const q = questionStep(ob.steps[1]);
-    expect(q.isCorrect(fraction(3, 4))).toBe(true);
-    expect(q.isCorrect(fraction(6, 8))).toBe(true);
-    expect(q.isCorrect(fraction(1, 2))).toBe(false);
+    expect(q.isCorrect(fraction(2, 4))).toBe(true);
+    expect(q.isCorrect(fraction(1, 2))).toBe(true);
+    expect(q.isCorrect(fraction(3, 4))).toBe(false);
   });
 });
 

@@ -52,13 +52,6 @@ const LEFT_TWO_QUARTERS: readonly string[] = [
   '0:0.5:0.5:0.5',
 ];
 
-/** Three of the four quarters (top-left, bottom-left, top-right). */
-const THREE_QUARTERS: readonly string[] = [
-  '0:0:0.5:0.5',
-  '0:0.5:0.5:0.5',
-  '0.5:0:0.5:0.5',
-];
-
 /* ─── puzzle setups ───────────────────────────────────────────────────────
  * Tiny helpers that build the starting/goal boards for each step. Named
  * after what they LOOK like, not how they're built — the curriculum reads
@@ -79,6 +72,18 @@ function fourQuarters(): Board {
 /** Four quarters with one of them chopped further into two eighths. */
 function fourQuartersWithOneChopped(): Board {
   return chop(fourQuarters(), RIGHT_TOP_QUARTER);
+}
+
+/** Same as fourQuartersWithOneChopped but the two eighths are then glued
+ *  back into a single 2/8 piece — the result of Yellow Belt's glue intro.
+ *  Visually identical to fourQuarters() but with one piece labelled 2/8
+ *  rather than 1/4. */
+function fourQuartersWithEighthsGlued(): Board {
+  return glue(
+    fourQuartersWithOneChopped(),
+    '0.5:0:0.25:0.5',
+    '0.75:0:0.25:0.5',
+  );
 }
 
 /** Two halves, the left one locked as the puzzle's "master" reference 1/2. */
@@ -350,17 +355,33 @@ export const LESSONS: readonly Lesson[] = [
         kind: 'question',
         instruction:
           'If the whole was split into 8 equal parts, what is each piece called?',
-        scratchBoard: fourQuarters(),
+        scratchBoard: fourQuartersWithOneChopped(),
         isCorrect: (answer) => areEquivalent(answer, fraction(1, 8)),
         correctLine: 'One eighth — 1/8. One of eight parts.',
         wrongLine: 'One piece of eight — write it 1 over 8.',
         hints: ['Top is parts you have (1). Bottom is total parts (8).'],
       },
       {
+        kind: 'board',
+        instruction:
+          'A new tool — Glue. Tap Glue to pick it up, then tap the glowing seam between the two eighths to combine them back into one piece.',
+        successLine:
+          'Two eighths glued — 2/8. The same SIZE as one quarter, just a different name. (We will learn how to rename it later.)',
+        startBoard: fourQuartersWithOneChopped(),
+        goalBoard: fourQuartersWithEighthsGlued(),
+        allowedTools: ['glue'],
+        minMoves: 1,
+        isComplete: (board) => hasPiece(board, 2, 8),
+        hints: [
+          'Tap the Glue tool to pick it up.',
+          'Then tap the glowing seam between the two 1/8 pieces.',
+        ],
+      },
+      {
         kind: 'question',
         instruction:
-          'Two eighths sit side by side and cover the same space as one quarter. What fraction of the whole is two eighths?',
-        scratchBoard: fourQuartersWithOneChopped(),
+          'You just saw it — two eighths cover the same space as one quarter. What fraction of the whole is two eighths?',
+        scratchBoard: fourQuartersWithEighthsGlued(),
         isCorrect: (answer) => areEquivalent(answer, fraction(1, 4)),
         correctLine:
           'Two eighths = 1/4. An eighth is smaller, but two of them rebuild a quarter.',
@@ -427,19 +448,6 @@ export const LESSONS: readonly Lesson[] = [
             options: [1, 2, 3, 4],
             slots: [
               {
-                prompt: 'And these three — how many parts?',
-                correctValue: 3,
-                wrongLine: 'Count the yellow slices.',
-                color: NUM_COLOR,
-                highlightPieces: THREE_QUARTERS,
-              },
-            ],
-            correctLine: 'Three parts — 3.',
-          },
-          {
-            options: [1, 2, 3, 4],
-            slots: [
-              {
                 prompt: 'And the whole board — how many parts in total?',
                 correctValue: 4,
                 wrongLine: 'Count every piece in the blue box.',
@@ -453,11 +461,11 @@ export const LESSONS: readonly Lesson[] = [
             options: [1, 2, 3, 4],
             slots: [
               {
-                prompt: 'Three of four — the top is the NUMERATOR (parts you have).',
-                correctValue: 3,
-                wrongLine: 'Count the yellow slices — three.',
+                prompt: 'Two of four — the top is the NUMERATOR (parts you have).',
+                correctValue: 2,
+                wrongLine: 'Count the yellow slices — two.',
                 color: NUM_COLOR,
-                highlightPieces: THREE_QUARTERS,
+                highlightPieces: LEFT_TWO_QUARTERS,
               },
               {
                 prompt: 'And the bottom is the DENOMINATOR (parts in total).',
@@ -468,18 +476,18 @@ export const LESSONS: readonly Lesson[] = [
               },
             ],
             correctLine:
-              'Three over four — 3/4. Numerator three, denominator four — three of four equal parts.',
+              'Two over four — 2/4. Numerator two, denominator four — two of four equal parts.',
           },
         ],
       },
       {
         kind: 'question',
         instruction:
-          'Three of four equal parts — write the fraction that names it.',
+          'Two of four equal parts — write the fraction that names it.',
         scratchBoard: fourQuarters(),
-        isCorrect: (answer) => areEquivalent(answer, fraction(3, 4)),
-        correctLine: 'Three over four — 3/4.',
-        wrongLine: 'Top is parts you have (3). Bottom is parts in total (4).',
+        isCorrect: (answer) => areEquivalent(answer, fraction(2, 4)),
+        correctLine: 'Two over four — 2/4.',
+        wrongLine: 'Top is parts you have (2). Bottom is parts in total (4).',
         hints: ['Numerator on top, denominator on bottom.'],
       },
     ],
