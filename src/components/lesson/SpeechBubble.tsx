@@ -17,9 +17,13 @@ interface SpeechBubbleProps {
   /** A quieter coaching hint shown beneath the main line. */
   accent?: string;
   talking?: boolean;
-  /** Interactive content (NumberPad, QuestionPanel, Continue button) rendered
-   *  inside the bubble below the line. The bubble grows to fit. */
+  /** Interactive content (NumberPad, QuestionPanel) rendered inside the
+   *  bubble below the line. The bubble grows to fit. */
   children?: ReactNode;
+  /** Optional "next" action overlaid on the bubble's bottom-right corner —
+   *  used by the Continue button so it doesn't grow the bubble vertically
+   *  or steal space from the line text. */
+  cornerAction?: ReactNode;
 }
 
 /* Inline stacked fraction — numerator / denominator with a real
@@ -35,9 +39,11 @@ const FRACTION_OUTER: CSSProperties = {
   margin: '0 0.18em',
   lineHeight: 1,
   // Small enough that the stacked numerator + bar + denominator fits
-  // inside the parent line-height without forcing the line to grow.
-  fontSize: '0.6em',
-  fontWeight: 700,
+  // inside the parent line-height without forcing the line to grow,
+  // but large enough that the fraction reads as a peer of the words
+  // around it — not a tiny inline subscript.
+  fontSize: '0.78em',
+  fontWeight: 800,
   // Inline-block content has its baseline at the bottom; with
   // vertical-align:middle the box extends both above and below the
   // parent's midline. A tiny upward nudge centres the BAR (visually,
@@ -49,10 +55,10 @@ const FRACTION_OUTER: CSSProperties = {
 const FRACTION_BAR: CSSProperties = {
   display: 'block',
   width: '100%',
-  height: 2,
+  height: 3,
   background: 'currentColor',
   margin: '2px 0',
-  borderRadius: 1,
+  borderRadius: 1.5,
 };
 
 function InlineFraction({ n, d }: { n: string; d: string }) {
@@ -84,7 +90,7 @@ function renderRichText(text: string): ReactNode[] {
   return parts;
 }
 
-export function SpeechBubble({ text, accent, talking = true, children }: SpeechBubbleProps) {
+export function SpeechBubble({ text, accent, talking = true, children, cornerAction }: SpeechBubbleProps) {
   // Voice state from the tts module — drives the mic chip's icon (muted /
   // live) and the pulse animation (only when actually speaking).
   const [voice, setVoice] = useState(() => ({
@@ -118,7 +124,7 @@ export function SpeechBubble({ text, accent, talking = true, children }: SpeechB
         backgroundColor: PARCHMENT_LIGHT,
         backgroundImage: `linear-gradient(180deg, ${PARCHMENT_LIGHT} 0%, ${PARCHMENT_DARK} 100%)`,
         borderRadius: 22,
-        padding: '20px 22px 22px',
+        padding: '22px 22px 16px',
         border: `4px solid ${INK}`,
         boxShadow: `0 0 0 4px ${DOJO_RED}, 0 12px 0 rgba(0,0,0,0.22), 0 18px 28px rgba(0,0,0,0.22)`,
         fontFamily: 'Fredoka, system-ui, sans-serif',
@@ -138,9 +144,11 @@ export function SpeechBubble({ text, accent, talking = true, children }: SpeechB
           boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
         }}
       />
-      {/* mic indicator — also the voice mute toggle. Pulses while the
-          sensei is actually speaking; goes flat (and adds a slash over
-          the mic icon) when the student has muted. */}
+      {/* Sensei chip — also the voice mute toggle. Layout reads left → right:
+          the "Sensei" label sits at full opacity always; the mic icon
+          follows and shows a slash when the student has muted; the red dot
+          on the far right is the "talking" indicator and only appears (and
+          pulses) while the sensei is actually speaking. */}
       <button
         type="button"
         onClick={toggleMute}
@@ -163,20 +171,9 @@ export function SpeechBubble({ text, accent, talking = true, children }: SpeechB
           fontSize: 13,
           border: 'none',
           cursor: 'pointer',
-          opacity: voice.enabled ? 1 : 0.72,
         }}
       >
-        <span
-          aria-hidden
-          style={{
-            display: 'inline-block',
-            width: 8,
-            height: 8,
-            borderRadius: 99,
-            background: voice.enabled ? DOJO_RED : 'rgba(255,255,255,0.35)',
-            animation: pulse ? 'dojo-pulse 900ms ease-in-out infinite' : 'none',
-          }}
-        />
+        Sensei
         <span
           style={{
             position: 'relative',
@@ -201,13 +198,25 @@ export function SpeechBubble({ text, accent, talking = true, children }: SpeechB
             />
           )}
         </span>
-        Sensei
+        <span
+          aria-hidden
+          style={{
+            display: 'inline-block',
+            width: 8,
+            height: 8,
+            borderRadius: 99,
+            background: DOJO_RED,
+            opacity: pulse ? 1 : 0,
+            transition: 'opacity 180ms ease',
+            animation: pulse ? 'dojo-pulse 900ms ease-in-out infinite' : 'none',
+          }}
+        />
       </button>
 
       <div
         style={{
           fontWeight: 600,
-          fontSize: 24,
+          fontSize: 20,
           lineHeight: 1.2,
           color: INK,
         }}
@@ -229,8 +238,25 @@ export function SpeechBubble({ text, accent, talking = true, children }: SpeechB
       )}
 
       {children && (
-        <div style={{ marginTop: 18, display: 'flex', justifyContent: 'center' }}>
+        <div style={{ marginTop: 12, display: 'flex', justifyContent: 'center' }}>
           {children}
+        </div>
+      )}
+
+      {/* cornerAction — overlaid on the bubble's bottom-right edge so the
+          Continue button doesn't grow the bubble. Negative offsets let the
+          button sit half-on, half-off the edge for a "next" affordance that
+          reads as attached to the bubble, not floating below it. */}
+      {cornerAction && (
+        <div
+          style={{
+            position: 'absolute',
+            right: -14,
+            bottom: -14,
+            zIndex: 2,
+          }}
+        >
+          {cornerAction}
         </div>
       )}
 
@@ -246,7 +272,7 @@ export function SpeechBubble({ text, accent, talking = true, children }: SpeechB
           left: '50%',
           top: '100%',
           transform: 'translateX(-50%)',
-          marginTop: 6,
+          marginTop: 2,
           filter: 'drop-shadow(0 5px 0 rgba(0,0,0,0.16))',
         }}
       >

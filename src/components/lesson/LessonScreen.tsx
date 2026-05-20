@@ -8,7 +8,7 @@
  * reveal progressively. Each step ends with a Continue gate.
  */
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   type Board,
   type Tool,
@@ -50,19 +50,32 @@ import { HintButton } from './HintButton';
 import { BeltUpOverlay } from './BeltUpOverlay';
 import { SettingsModal } from './SettingsModal';
 import { IconChop, IconGlue, IconSimplify } from './icons';
-import { getUnlockedBelts, markBeltUnlocked } from '@/utils/storage';
+import {
+  getProgress,
+  getUnlockedBelts,
+  markBeltUnlocked,
+  setProgress,
+} from '@/utils/storage';
+import {
+  LARGE_TABLET_QUERY,
+  SMALL_TABLET_QUERY,
+  useMediaQuery,
+} from '@/utils/useMediaQuery';
 import type { BeltKey } from '@/core/types';
 import '@/styles/dojo.css';
 
-const FIRST_STEP = LESSONS[0].steps[0];
-const INITIAL_BOARD = FIRST_STEP.kind === 'board' ? FIRST_STEP.startBoard : createBoard();
-
-// A pause after a completing move before the follow-ups or the celebration —
-// long enough for the sensei's success line to be read.
-const SETTLE_MS = 1200;
-
-// A pause showing a sub-prompt's "right" line before advancing to the next.
-const FOLLOWUP_RIGHT_MS = 1300;
+/* Resume the student where they left off. Persisted indexes are clamped
+ * so curriculum reshuffles never crash a returning visitor — out-of-range
+ * indexes fall back to the start. */
+function resumePosition(): { lessonIndex: number; stepIndex: number; board: Board } {
+  const saved = getProgress();
+  const lessonIndex = Math.min(Math.max(saved.lessonIndex, 0), LESSONS.length - 1);
+  const lesson = LESSONS[lessonIndex] ?? LESSONS[0];
+  const stepIndex = Math.min(Math.max(saved.stepIndex, 0), lesson.steps.length - 1);
+  const step = lesson.steps[stepIndex];
+  const board = step.kind === 'board' ? step.startBoard : createBoard();
+  return { lessonIndex, stepIndex, board };
+}
 
 // Every tool introduced by a board step up to and including (lessonIndex,
 // stepIndex) — drives which tool buttons are on screen.
@@ -109,12 +122,25 @@ function highlightFor(
 }
 
 export function LessonScreen() {
-  const [lessonIndex, setLessonIndex] = useState(0);
-  const [stepIndex, setStepIndex] = useState(0);
-  const [board, setBoard] = useState<Board>(INITIAL_BOARD);
+  // Initialise once from localStorage so a returning student resumes at
+  // their last lesson + step. Brand-new visitors get (0, 0).
+  const initial = useState(() => resumePosition())[0];
+  const [lessonIndex, setLessonIndex] = useState(initial.lessonIndex);
+  const [stepIndex, setStepIndex] = useState(initial.stepIndex);
+  const [board, setBoard] = useState<Board>(initial.board);
+
+  // Persist (lessonIndex, stepIndex) on every change so a reload returns
+  // the student to the same step they were on. Reset Progress in settings
+  // clears this along with the rest of the dojo:* keys.
+  useEffect(() => {
+    setProgress({ lessonIndex, stepIndex });
+  }, [lessonIndex, stepIndex]);
   const [tool, setTool] = useState<Tool | null>(null);
   const [celebrating, setCelebrating] = useState(false);
   const [settling, setSettling] = useState(false);
+  // When successLine is an array, this tracks which beat the sensei is on.
+  // Reset to 0 whenever a new settling phase starts.
+  const [settleBeat, setSettleBeat] = useState(0);
   const [numInput, setNumInput] = useState('');
   const [denInput, setDenInput] = useState('');
   const [feedbackWrong, setFeedbackWrong] = useState(false);
@@ -137,6 +163,15 @@ export function LessonScreen() {
     null,
   );
   const [settingsOpen, setSettingsOpen] = useState(false);
+
+  // Two tablet tiers so iPad mini/Air/Pro 11" (small) and iPad Pro 12.9"
+  // (large) both get a layout that lets the sensei's speech bubble breathe.
+  // Desktop keeps the original generous values.
+  const isSmallTablet = useMediaQuery(SMALL_TABLET_QUERY);
+  const isLargeTablet = useMediaQuery(LARGE_TABLET_QUERY);
+  const boardMaxWidth = isSmallTablet ? 540 : isLargeTablet ? 720 : 900;
+  const toolsPaddingLeft = isSmallTablet ? 56 : isLargeTablet ? 80 : 120;
+  const toolsPaddingRight = isSmallTablet ? 28 : isLargeTablet ? 36 : 0;
 
   const lesson = LESSONS[lessonIndex];
   const step = lesson?.steps[stepIndex];
@@ -168,31 +203,32 @@ export function LessonScreen() {
   // The colored region overlay on the play board — comes from the focused slot.
   const highlight = currentSlot ? highlightFor(currentSlot, board) : undefined;
 
-  // A step's goal is met — celebrate, with a belt-up jingle on a belt's final.
-  const celebrate = () => {
-    setCelebrating(true);
+  // The "you got it" affirmation sound. 'beltUp' on the last step of a
+  // belt (a more triumphant cue), otherwise the lighter 'success'. Called
+  // at the moment the student gets the puzzle / question right so the
+  // audio confirmation is instant — celebrate() then handles the visual
+  // beat without re-playing the sound.
+  const playStepCorrectSound = () => {
     const lastStep = !!lesson && stepIndex + 1 >= lesson.steps.length;
     playSound(lastStep ? 'beltUp' : 'success');
   };
 
-  // Apply a board change. If it completes the step, settle for a beat, then
-  // either enter the follow-up phase or celebrate directly.
+  // A step's goal is met — flip into celebration (confetti + final beat).
+  const celebrate = () => {
+    setCelebrating(true);
+  };
+
+  // Apply a board change. If it completes the step, play the success
+  // chime immediately and hold on the first successLine beat
+  // (settling=true, settleBeat=0) until the student taps Continue —
+  // handleContinue walks any further beats and then decides whether to
+  // enter follow-ups or celebrate.
   const applyMove = (next: Board) => {
     setBoard(next);
     if (step?.kind === 'board' && step.isComplete(next)) {
-      const completedStep = step;
+      playStepCorrectSound();
       setSettling(true);
-      window.setTimeout(() => {
-        setSettling(false);
-        if (completedStep.followUps && completedStep.followUps.length > 0) {
-          const firstSub = completedStep.followUps[0];
-          setFollowUpIndex(0);
-          setSlotIndex(0);
-          setSlotValues(new Array(firstSub.slots.length).fill(null));
-        } else {
-          celebrate();
-        }
-      }, SETTLE_MS);
+      setSettleBeat(0);
     }
   };
 
@@ -218,7 +254,8 @@ export function LessonScreen() {
 
   // The student tapped a tile. Check it against the focused slot's correct
   // value; if right, fill the slot and advance focus (or finish the sub-prompt);
-  // if wrong, show the slot's wrong-line and wait for a correct tap.
+  // if wrong, show the slot's wrong-line and wait for a correct tap. When the
+  // last slot is filled we hold on the correctLine — Continue advances.
   const handleTileTap = (value: number) => {
     if (!followUp || followUpFeedback === 'right') return;
     const slot = followUp.slots[slotIndex];
@@ -229,7 +266,6 @@ export function LessonScreen() {
       if (slotIndex + 1 >= followUp.slots.length) {
         setFollowUpFeedback('right');
         playSound('correct');
-        window.setTimeout(advanceFollowUp, FOLLOWUP_RIGHT_MS);
       } else {
         setSlotIndex(slotIndex + 1);
         playSound('correct');
@@ -252,6 +288,7 @@ export function LessonScreen() {
   const resetTransients = () => {
     setCelebrating(false);
     setSettling(false);
+    setSettleBeat(0);
     setFeedbackWrong(false);
     setNumInput('');
     setDenInput('');
@@ -262,10 +299,9 @@ export function LessonScreen() {
     setTool(null);
   };
 
-  // Tap Continue once a step is done — move to the next step / lesson.
+  // Move to the next step / lesson. Caller plays the continue sound.
   const advance = () => {
     if (!lesson) return;
-    playSound('continue');
     if (stepIndex + 1 < lesson.steps.length) {
       setStepIndex(stepIndex + 1);
       enterStep(lesson.steps[stepIndex + 1]);
@@ -284,6 +320,47 @@ export function LessonScreen() {
       }
     }
     resetTransients();
+  };
+
+  // Single Continue handler. Text in the bubble never changes on a timer —
+  // every transition past a "the sensei is reading you something" beat
+  // funnels through here. Branches in priority order:
+  //   1. last sub-prompt answered (followUpFeedback === 'right') → next sub-prompt or celebrate
+  //   2. board step solved (settling) → enter follow-ups, or celebrate if none
+  //   3. step celebrated (celebrating) → next step / lesson
+  const handleContinue = () => {
+    if (followUpIndex !== null && followUpFeedback === 'right') {
+      playSound('continue');
+      advanceFollowUp();
+      return;
+    }
+    if (settling && step?.kind === 'board') {
+      playSound('continue');
+      const lines = Array.isArray(step.successLine)
+        ? step.successLine
+        : [step.successLine];
+      // More beats in the successLine? Just advance the cursor, stay in settling.
+      if (settleBeat + 1 < lines.length) {
+        setSettleBeat(settleBeat + 1);
+        return;
+      }
+      // Last beat — exit settling and either enter follow-ups or celebrate.
+      setSettling(false);
+      setSettleBeat(0);
+      if (step.followUps && step.followUps.length > 0) {
+        const firstSub = step.followUps[0];
+        setFollowUpIndex(0);
+        setSlotIndex(0);
+        setSlotValues(new Array(firstSub.slots.length).fill(null));
+      } else {
+        celebrate();
+      }
+      return;
+    }
+    if (celebrating) {
+      playSound('continue');
+      advance();
+    }
   };
 
   // Jump to any unlocked lesson — from the LessonPane or a BeltBar rank
@@ -318,6 +395,7 @@ export function LessonScreen() {
       num >= 0 &&
       den > 0;
     if (valid && step.isCorrect(fraction(num, den))) {
+      playStepCorrectSound();
       celebrate();
     } else {
       setFeedbackWrong(true);
@@ -386,6 +464,11 @@ export function LessonScreen() {
     }
   };
 
+  // The successLine for a board step — always normalised to an array so
+  // settling can walk through it beat by beat.
+  const boardSuccessLines = (boardStep: Extract<Step, { kind: 'board' }>) =>
+    Array.isArray(boardStep.successLine) ? boardStep.successLine : [boardStep.successLine];
+
   // What the sensei is saying right now.
   const senseiSays = (): string => {
     if (done) {
@@ -394,14 +477,19 @@ export function LessonScreen() {
     }
     if (!step) return '';
     if (celebrating) {
-      return step.kind === 'question' ? step.correctLine : step.successLine;
+      if (step.kind === 'question') return step.correctLine;
+      const lines = boardSuccessLines(step);
+      return lines[lines.length - 1]; // hold the last beat through celebration
     }
     if (followUp && currentSlot) {
       if (followUpFeedback === 'right') return followUp.correctLine;
       if (followUpFeedback === 'wrong') return currentSlot.wrongLine;
       return currentSlot.prompt;
     }
-    if (settling && step.kind === 'board') return step.successLine;
+    if (settling && step.kind === 'board') {
+      const lines = boardSuccessLines(step);
+      return lines[Math.min(settleBeat, lines.length - 1)];
+    }
     if (step.kind === 'question' && feedbackWrong) return step.wrongLine;
     return step.instruction;
   };
@@ -454,7 +542,11 @@ export function LessonScreen() {
               transform: 'translateY(-50%)',
             }}
           >
-            <TopicChip onOpen={() => setPaneOpen(true)} />
+            <TopicChip
+              onOpen={() => setPaneOpen(true)}
+              name={lesson?.name ?? 'All Belts Earned'}
+              belt={lesson?.belt ?? null}
+            />
           </div>
         </div>
 
@@ -511,6 +603,11 @@ export function LessonScreen() {
               alignItems: 'center',
               justifyContent: 'flex-start',
               height: '100%',
+              // Horizontal padding keeps the speech bubble off the viewport's
+              // left edge and the board's left edge as the side gutter
+              // narrows. The bubble grows upward, never wider than this.
+              paddingLeft: 24,
+              paddingRight: 24,
               paddingBottom: 0,
               minWidth: 0,
               minHeight: 0,
@@ -538,7 +635,38 @@ export function LessonScreen() {
                 marginBottom: 0,
               }}
             >
-              <SpeechBubble text={senseiText}>
+              <SpeechBubble
+                text={senseiText}
+                cornerAction={
+                  celebrating || settling || followUpFeedback === 'right' ? (
+                    <button
+                      type="button"
+                      aria-label="Continue"
+                      onClick={handleContinue}
+                      style={{
+                        width: 52,
+                        height: 52,
+                        padding: 0,
+                        borderRadius: 999,
+                        border: `3px solid ${INK}`,
+                        background: 'linear-gradient(180deg, #7ed47f, #4caf50)',
+                        color: '#fff',
+                        fontFamily: 'Fredoka, system-ui, sans-serif',
+                        fontWeight: 700,
+                        fontSize: 28,
+                        lineHeight: 1,
+                        cursor: 'pointer',
+                        boxShadow: `0 4px 0 ${INK}, 0 6px 12px rgba(0,0,0,0.28)`,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}
+                    >
+                      ✓
+                    </button>
+                  ) : undefined
+                }
+              >
                 {isQuestion && !celebrating && (
                   <QuestionPanel
                     numerator={numInput}
@@ -548,7 +676,7 @@ export function LessonScreen() {
                     onSubmit={submitAnswer}
                   />
                 )}
-                {followUp && !celebrating && (
+                {followUp && !celebrating && followUpFeedback !== 'right' && (
                   <NumberPad
                     options={followUp.options}
                     slots={followUp.slots.map((s, i) => ({
@@ -558,32 +686,6 @@ export function LessonScreen() {
                     focusedIndex={slotIndex}
                     onTileTap={handleTileTap}
                   />
-                )}
-                {celebrating && (
-                  <button
-                    type="button"
-                    onClick={advance}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 8,
-                      padding: '12px 26px',
-                      borderRadius: 999,
-                      border: `3px solid ${INK}`,
-                      background: 'linear-gradient(180deg, #7ed47f, #4caf50)',
-                      color: '#fff',
-                      fontFamily: 'Fredoka, system-ui, sans-serif',
-                      fontWeight: 700,
-                      fontSize: 17,
-                      cursor: 'pointer',
-                      boxShadow: `0 5px 0 ${INK}, 0 8px 14px rgba(0,0,0,0.25)`,
-                    }}
-                  >
-                    <span aria-hidden style={{ fontSize: 20, lineHeight: 1 }}>
-                      ✓
-                    </span>
-                    Continue
-                  </button>
                 )}
               </SpeechBubble>
             </div>
@@ -598,7 +700,7 @@ export function LessonScreen() {
             style={{
               display: 'grid',
               placeItems: 'start center',
-              width: 'min(900px, calc(100vh - 204px))',
+              width: `min(${boardMaxWidth}px, calc(100vh - 204px))`,
             }}
           >
             <div style={{ position: 'relative', width: '100%' }}>
@@ -677,7 +779,8 @@ export function LessonScreen() {
           <div
             style={{
               minWidth: 0,
-              paddingLeft: 120,
+              paddingLeft: toolsPaddingLeft,
+              paddingRight: toolsPaddingRight,
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'flex-start',

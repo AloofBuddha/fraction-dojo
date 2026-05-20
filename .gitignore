@@ -26,3 +26,7 @@ dist-ssr
 # Playwright captures — kept in reference_photos/playwright-mcp/ as local
 # scratch, the inner .gitignore strips the PNGs.
 .playwright-mcp/
+
+# Ad-hoc screenshots dropped at the repo root by Playwright runs during
+# session-time verification. Not part of the project.
+/*.png

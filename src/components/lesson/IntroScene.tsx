@@ -196,16 +196,21 @@ export function IntroScene({ onDone }: IntroSceneProps) {
               <div
                 style={{ width: "100%", maxWidth: 420, marginBottom: 0 }}
               >
-                <SpeechBubble text={beat.text}>
-                  {!isWaiting && (
-                    <button type="button" onClick={advance} style={CONTINUE_BUTTON}>
-                      <span aria-hidden style={{ fontSize: 20, lineHeight: 1 }}>
+                <SpeechBubble
+                  text={beat.text}
+                  cornerAction={
+                    !isWaiting ? (
+                      <button
+                        type="button"
+                        aria-label={isLast ? "Begin training" : "Continue"}
+                        onClick={advance}
+                        style={CONTINUE_BUTTON}
+                      >
                         ✓
-                      </span>
-                      {isLast ? "Begin Training" : "Continue"}
-                    </button>
-                  )}
-                </SpeechBubble>
+                      </button>
+                    ) : undefined
+                  }
+                />
               </div>
             )}
           </div>
@@ -297,19 +302,22 @@ export function IntroScene({ onDone }: IntroSceneProps) {
 }
 
 const CONTINUE_BUTTON: CSSProperties = {
-  display: "flex",
-  alignItems: "center",
-  gap: 8,
-  padding: "12px 26px",
+  width: 52,
+  height: 52,
+  padding: 0,
   borderRadius: 999,
   border: `3px solid ${INK}`,
   background: "linear-gradient(180deg, #7ed47f, #4caf50)",
   color: "#fff",
   fontFamily: "Fredoka, system-ui, sans-serif",
   fontWeight: 700,
-  fontSize: 17,
+  fontSize: 28,
+  lineHeight: 1,
   cursor: "pointer",
-  boxShadow: `0 5px 0 ${INK}, 0 8px 14px rgba(0,0,0,0.25)`,
+  boxShadow: `0 4px 0 ${INK}, 0 6px 12px rgba(0,0,0,0.28)`,
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
 };
 
 const BEGIN_BUTTON: CSSProperties = {

@@ -1,7 +1,10 @@
-/* The top-right "what am I learning" chip. Tapping it opens the LessonPane
- * so the student can jump to any unlocked belt's lesson. */
+/* The top-right "what am I learning" chip. Shows the current lesson's
+ * name with a belt-colored square swatch, matching the BeltBar's idiom.
+ * Tapping it opens the LessonPane so the student can jump elsewhere. */
 
 import type { CSSProperties } from 'react';
+import { BELT_COLORS } from '@/constants/theme';
+import type { BeltKey } from '@/core/types';
 
 const CHIP_STYLE: CSSProperties = {
   display: 'flex',
@@ -22,20 +25,17 @@ const CHIP_STYLE: CSSProperties = {
   cursor: 'pointer',
 };
 
-const DOT_STYLE: CSSProperties = {
-  display: 'inline-block',
-  width: 8,
-  height: 8,
-  borderRadius: 99,
-  background: '#d8453d',
-  boxShadow: '0 0 0 2px rgba(216,69,61,0.35)',
-};
-
 interface TopicChipProps {
   onOpen: () => void;
+  /** The current lesson's display name (e.g. 'Meet a Half'). */
+  name: string;
+  /** Belt of the current lesson — drives the swatch colour. Null when
+   *  the curriculum is complete, in which case the swatch is dim. */
+  belt: BeltKey | null;
 }
 
-export function TopicChip({ onOpen }: TopicChipProps) {
+export function TopicChip({ onOpen, name, belt }: TopicChipProps) {
+  const swatch = belt ? BELT_COLORS[belt] : null;
   return (
     <button
       type="button"
@@ -43,8 +43,20 @@ export function TopicChip({ onOpen }: TopicChipProps) {
       style={CHIP_STYLE}
       aria-label="Open lessons"
     >
-      <span aria-hidden style={DOT_STYLE} />
-      Equivalent Fractions
+      <span
+        aria-hidden
+        style={{
+          display: 'inline-block',
+          width: 14,
+          height: 14,
+          borderRadius: 3,
+          background: swatch?.color ?? 'rgba(255, 220, 150, 0.35)',
+          border: `2px solid ${swatch?.trim ?? 'rgba(255, 220, 150, 0.6)'}`,
+          boxShadow: '0 1px 0 rgba(0,0,0,0.4)',
+          flexShrink: 0,
+        }}
+      />
+      {name}
       <span
         aria-hidden
         style={{

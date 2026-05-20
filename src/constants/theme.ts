@@ -31,12 +31,18 @@ export const PARCHMENT_DARK = '#f5e7c0';
 export const GLOW_GOLD = '#ffdf80';
 
 /* ─── slot colour scheme ─────────────────────────────────────────────────
- * The "two colours" the curriculum uses as a teaching language: a yellow
- * border around the part you have (numerator), a blue border around the
- * total parts (denominator). Repeated across every follow-up sub-prompt. */
+ * The "two colours" the curriculum uses as a teaching language: one for
+ * the part you have (numerator), the other for the total parts
+ * (denominator). They need to be:
+ *   1. visually different from every piece fill (1..64) so a highlight is
+ *      never the same colour as the piece it surrounds, and
+ *   2. high contrast against EACH OTHER so a kid never confuses which
+ *      slot they're filling.
+ * Magenta + teal are colour-wheel opposites, both sit outside the warm
+ * tan→pink piece palette, and pop against the wood board background. */
 
-export const NUM_COLOR = '#f3b13a'; // yellow — "parts you have"
-export const DEN_COLOR = '#5ba5d9'; // blue   — "parts in total"
+export const NUM_COLOR = '#d81b60'; // magenta — "parts you have"
+export const DEN_COLOR = '#00838f'; // teal    — "parts in total"
 
 /* ─── piece fills by denominator ─────────────────────────────────────────
  * Each denominator gets its own colour so a glance at the board reads as a

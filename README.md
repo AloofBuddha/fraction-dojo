@@ -4,6 +4,8 @@ A voice-first, karate-themed math tutor that teaches **fraction equivalence**
 (½ = 2/4 = 4/8). Built as a 1-week prototype cloning the Synthesis Tutor
 experience — a conversational tutor paired with an interactive manipulative.
 
+> **Live:** <https://fraction-dojo.vercel.app/>
+>
 > **Status:** in development. See [`SPRINT.md`](./SPRINT.md) for the PR roadmap
 > and [`PRD.pdf`](./PRD.pdf) for the original brief.
 

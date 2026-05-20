@@ -80,46 +80,54 @@ function Row({ label, hint, children }: { label: string; hint?: string; children
   );
 }
 
-function Toggle({ on, onChange, labels }: { on: boolean; onChange: (v: boolean) => void; labels: [string, string] }) {
-  return (
-    <div style={{ display: 'inline-flex', borderRadius: 999, overflow: 'hidden', border: `2px solid ${INK}` }}>
-      <Segment active={!on} onClick={() => onChange(false)}>
-        {labels[0]}
-      </Segment>
-      <Segment active={on} onClick={() => onChange(true)}>
-        {labels[1]}
-      </Segment>
-    </div>
-  );
-}
-
-function Segment({
-  active,
-  onClick,
-  children,
+/* iOS-style pill switch. The row's label says what is being toggled;
+ * the switch's position (knob left / right) shows whether it's on. No
+ * "Off / On" caption is needed. */
+function Switch({
+  on,
+  onChange,
+  label,
 }: {
-  active: boolean;
-  onClick: () => void;
-  children: ReactNode;
+  on: boolean;
+  onChange: (v: boolean) => void;
+  label: string;
 }) {
   return (
     <button
       type="button"
-      onClick={onClick}
+      role="switch"
+      aria-checked={on}
+      aria-label={label}
+      onClick={() => onChange(!on)}
       style={{
-        padding: '7px 16px',
-        fontFamily: 'inherit',
-        fontWeight: 700,
-        fontSize: 14,
-        border: 'none',
-        background: active
-          ? `linear-gradient(180deg, #ffd97a, ${DOJO_RED === '#d8453d' ? '#e3a431' : DOJO_RED})`
-          : 'rgba(0,0,0,0.06)',
-        color: active ? '#3a2412' : '#5c3a1e',
+        width: 52,
+        height: 30,
+        borderRadius: 999,
+        border: `2px solid ${INK}`,
+        background: on
+          ? `linear-gradient(180deg, #ef6f5a, ${DOJO_RED})`
+          : 'rgba(0,0,0,0.18)',
+        padding: 0,
+        position: 'relative',
         cursor: 'pointer',
+        transition: 'background 180ms ease',
+        boxShadow: `inset 0 2px 3px rgba(0,0,0,0.25)`,
       }}
     >
-      {children}
+      <span
+        aria-hidden
+        style={{
+          position: 'absolute',
+          top: 2,
+          left: on ? 24 : 2,
+          width: 22,
+          height: 22,
+          borderRadius: 999,
+          background: '#fff',
+          boxShadow: `0 2px 4px rgba(0,0,0,0.3)`,
+          transition: 'left 180ms ease',
+        }}
+      />
     </button>
   );
 }
@@ -193,21 +201,21 @@ export function SettingsModal({ onClose }: SettingsModalProps) {
           label="Sensei voice"
           hint="Speaks each line aloud. Currently a browser preview."
         >
-          <Toggle on={voice} onChange={onVoiceChange} labels={['Off', 'On']} />
+          <Switch on={voice} onChange={onVoiceChange} label="Sensei voice" />
         </Row>
 
         <Row label="Sound effects" hint="Chop, glue, success — the dojo's audio.">
-          <Toggle on={sound} onChange={onSoundChange} labels={['Off', 'On']} />
+          <Switch on={sound} onChange={onSoundChange} label="Sound effects" />
         </Row>
 
         <Row
-          label="Reading font"
-          hint="Hyperlegible is designed for low-vision and dyslexic readers."
+          label="Dyslexic font"
+          hint="Easier reading for low-vision and dyslexic readers."
         >
-          <Toggle
+          <Switch
             on={font === 'hyperlegible'}
             onChange={(v) => onFontChange(v ? 'hyperlegible' : 'default')}
-            labels={['Default', 'Hyperlegible']}
+            label="Dyslexic font"
           />
         </Row>
 

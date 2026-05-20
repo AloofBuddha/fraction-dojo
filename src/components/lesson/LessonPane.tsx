@@ -190,12 +190,12 @@ export function LessonPane({
                   </span>
                   <span
                     style={{
-                      fontSize: 12,
-                      opacity: 0.7,
-                      letterSpacing: 0.3,
+                      fontSize: 13,
+                      opacity: 0.78,
+                      letterSpacing: 0.2,
                     }}
                   >
-                    {lesson.steps.length} step{lesson.steps.length === 1 ? '' : 's'}
+                    {lesson.name}
                   </span>
                 </span>
               </button>

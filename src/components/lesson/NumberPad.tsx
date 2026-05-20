@@ -80,14 +80,14 @@ function Slot({
 }) {
   const color = slot.color ?? INK;
   const style: CSSProperties = {
-    width: 68,
-    height: 56,
-    borderRadius: 12,
+    width: 56,
+    height: 46,
+    borderRadius: 10,
     border: `4px ${slot.value == null ? 'dashed' : 'solid'} ${color}`,
     background: '#fff',
     fontFamily: 'Fredoka, system-ui, sans-serif',
     fontWeight: 700,
-    fontSize: 30,
+    fontSize: 24,
     color: INK,
     cursor: 'pointer',
     boxSizing: 'border-box',
@@ -113,36 +113,36 @@ function Slot({
 const CARD: CSSProperties = {
   display: 'flex',
   flexDirection: 'column',
-  gap: 12,
-  paddingTop: 4,
+  gap: 8,
+  paddingTop: 2,
 };
 const FRACTION_COL: CSSProperties = {
   display: 'flex',
   flexDirection: 'column',
   alignItems: 'center',
-  gap: 6,
+  gap: 4,
 };
 const BAR: CSSProperties = {
-  width: 78,
-  height: 6,
+  width: 64,
+  height: 4,
   borderRadius: 99,
   background: INK,
 };
 const PALETTE: CSSProperties = {
   display: 'flex',
   justifyContent: 'center',
-  gap: 10,
+  gap: 8,
   flexWrap: 'wrap',
 };
 const TILE: CSSProperties = {
-  width: 52,
-  height: 52,
+  width: 44,
+  height: 44,
   borderRadius: 99,
   border: `3px solid ${INK}`,
   background: 'linear-gradient(180deg, #f6ecd6, #e3cea0)',
   fontFamily: 'Fredoka, system-ui, sans-serif',
   fontWeight: 700,
-  fontSize: 24,
+  fontSize: 20,
   color: INK,
   cursor: 'pointer',
   boxShadow: `0 4px 0 ${INK}`,

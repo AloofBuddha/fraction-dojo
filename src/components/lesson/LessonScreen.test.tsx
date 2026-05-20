@@ -17,14 +17,17 @@ test('tapping the board with no tool selected does nothing', async () => {
   expect(screen.queryByRole('button', { name: '1/2 piece' })).toBeNull();
 });
 
-// Picking the Chop tool, then tapping the board, completes the chop and shows
-// the success line — the lesson's takeaway "one whole becomes two halves."
-test('chopping the whole board shows the success line', async () => {
+// Picking the Chop tool, then tapping the board, completes the chop and the
+// sensei stops repeating the instruction. We just want to confirm the chop
+// happened and the bubble transitioned away from the first-challenge prompt —
+// the exact success-line copy gets re-written as the script is tuned.
+test('chopping the whole board completes the puzzle', async () => {
   const user = userEvent.setup();
   render(<LessonScreen />);
   await user.click(screen.getByRole('button', { name: /chop/i }));
   await user.click(screen.getByRole('button', { name: '1/1 piece' }));
-  expect(await screen.findByText(/two equal halves/i)).toBeInTheDocument();
+  expect(await screen.findAllByRole('button', { name: '1/2 piece' })).toHaveLength(2);
+  expect(screen.queryByText(/first challenge/i)).toBeNull();
 });
 
 // Tools reveal progressively — Glue is not on screen during the first puzzle.

@@ -37,7 +37,11 @@ export interface BoardStep extends StepBase {
    *  have taken a wrong turn" affordance rather than a permanent button. */
   readonly minMoves: number;
   readonly isComplete: (board: Board) => boolean;
-  readonly successLine: string;
+  /** What the sensei says when the goal is met. A string is one beat; a
+   *  string array is a sequence of beats the student steps through one
+   *  at a time via Continue. The last beat is also what the sensei keeps
+   *  saying while celebration confetti runs. */
+  readonly successLine: string | readonly string[];
   /** Understanding-check prompts asked after the goal is met. */
   readonly followUps?: readonly SubPrompt[];
 }
@@ -86,7 +90,12 @@ export type Step = BoardStep | QuestionStep;
  *  the lesson's position in the curriculum array. */
 export interface Lesson {
   readonly id: string;
+  /** The belt name as it appears in headers — e.g. 'White Belt'. */
   readonly title: string;
+  /** What the lesson teaches, in two-to-four words — e.g. 'Meet a Half'.
+   *  Surfaced in the TopicChip and as a second-level entry in the
+   *  LessonPane so the student sees the topic, not just the belt. */
+  readonly name: string;
   readonly belt: BeltKey;
   readonly steps: readonly Step[];
 }

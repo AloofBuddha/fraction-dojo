@@ -74,6 +74,18 @@ function fourQuartersWithOneChopped(): Board {
   return chop(fourQuarters(), RIGHT_TOP_QUARTER);
 }
 
+/** A whole board chopped into eight equal eighths — four columns by two
+ *  rows of vertical-strip pieces. Used as the scratchpad for any question
+ *  that asks about a board divided into eighths so the visual matches the
+ *  question's premise. */
+function eightEighths(): Board {
+  let board = fourQuarters();
+  for (const id of ALL_QUARTERS) {
+    board = chop(board, id);
+  }
+  return board;
+}
+
 /** Same as fourQuartersWithOneChopped but the two eighths are then glued
  *  back into a single 2/8 piece — the result of Yellow Belt's glue intro.
  *  Visually identical to fourQuarters() but with one piece labelled 2/8
@@ -189,14 +201,18 @@ export const LESSONS: readonly Lesson[] = [
   {
     id: 'white-belt',
     title: 'White Belt',
+    name: 'Meet a Half',
     belt: 'white',
     steps: [
       {
         kind: 'board',
         instruction:
           'Your first challenge. Tap the Chop tool, then tap the board to split it into two equal parts.',
-        successLine:
-          'One chop, two EQUAL halves — both pieces exactly the same size. That is what "equal" means. Each is a HALF, written 1/2.',
+        successLine: [
+          'ONE chop, TWO equal halves — both pieces exactly the same size.',
+          'Each is a HALF — written 1/2.',
+          'We say it out loud as "one half."',
+        ],
         startBoard: createBoard(),
         goalBoard: twoHalves(),
         allowedTools: ['chop'],
@@ -222,9 +238,9 @@ export const LESSONS: readonly Lesson[] = [
             options: [1, 2, 4],
             slots: [
               {
-                prompt: 'Just the yellow slice on its own — how many parts is that?',
+                prompt: 'Now just the yellow slice on its own — how many parts are in the yellow box?',
                 correctValue: 1,
-                wrongLine: 'Just the yellow piece. How many is that?',
+                wrongLine: 'Just the yellow box. How many is that?',
                 color: NUM_COLOR,
                 highlightPiece: RIGHT_HALF,
               },
@@ -235,16 +251,16 @@ export const LESSONS: readonly Lesson[] = [
             options: [1, 2, 4],
             slots: [
               {
-                prompt: 'Put it together — parts you have on top.',
+                prompt: 'Put it together — the parts you have on top.',
                 correctValue: 1,
-                wrongLine: 'Just the yellow slice — how many?',
+                wrongLine: 'Just the yellow box — how many?',
                 color: NUM_COLOR,
                 highlightPiece: RIGHT_HALF,
               },
               {
-                prompt: 'And parts in total on the bottom.',
+                prompt: 'And the total parts on the bottom.',
                 correctValue: 2,
-                wrongLine: 'Count all the pieces in the blue box.',
+                wrongLine: 'Count the total number of pieces in the blue box.',
                 color: DEN_COLOR,
                 highlightPieces: [LEFT_HALF, RIGHT_HALF],
               },
@@ -272,6 +288,7 @@ export const LESSONS: readonly Lesson[] = [
   {
     id: 'yellow-belt',
     title: 'Yellow Belt',
+    name: 'Sharper Cuts',
     belt: 'yellow',
     steps: [
       {
@@ -355,7 +372,7 @@ export const LESSONS: readonly Lesson[] = [
         kind: 'question',
         instruction:
           'If the whole was split into 8 equal parts, what is each piece called?',
-        scratchBoard: fourQuartersWithOneChopped(),
+        scratchBoard: eightEighths(),
         isCorrect: (answer) => areEquivalent(answer, fraction(1, 8)),
         correctLine: 'One eighth — 1/8. One of eight parts.',
         wrongLine: 'One piece of eight — write it 1 over 8.',
@@ -401,6 +418,7 @@ export const LESSONS: readonly Lesson[] = [
   {
     id: 'orange-belt',
     title: 'Orange Belt',
+    name: 'Reading a Fraction',
     belt: 'orange',
     steps: [
       {
@@ -499,6 +517,7 @@ export const LESSONS: readonly Lesson[] = [
   {
     id: 'green-belt',
     title: 'Green Belt',
+    name: 'Glue',
     belt: 'green',
     steps: [
       {
@@ -574,6 +593,7 @@ export const LESSONS: readonly Lesson[] = [
   {
     id: 'blue-belt',
     title: 'Blue Belt',
+    name: 'Two Names, One Size',
     belt: 'blue',
     steps: [
       {
@@ -647,6 +667,7 @@ export const LESSONS: readonly Lesson[] = [
   {
     id: 'purple-belt',
     title: 'Purple Belt',
+    name: 'Deeper Equivalence',
     belt: 'purple',
     steps: [
       {
@@ -706,6 +727,7 @@ export const LESSONS: readonly Lesson[] = [
   {
     id: 'brown-belt',
     title: 'Brown Belt',
+    name: 'Simplify',
     belt: 'brown',
     steps: [
       {
@@ -758,6 +780,7 @@ export const LESSONS: readonly Lesson[] = [
   {
     id: 'black-belt',
     title: 'Black Belt',
+    name: 'Mastery',
     belt: 'black',
     steps: [
       {
