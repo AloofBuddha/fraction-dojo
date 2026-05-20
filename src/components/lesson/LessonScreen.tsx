@@ -488,6 +488,8 @@ export function LessonScreen() {
               height: '100%',
               paddingBottom: 32,
               minWidth: 0,
+              minHeight: 0,
+              overflow: 'visible',
             }}
           >
             <div
@@ -705,7 +707,7 @@ export function LessonScreen() {
                 disabled={!chopEnabled}
                 onClick={() => selectTool('chop')}
               >
-                <IconChop size={48} />
+                <IconChop size={40} />
               </ToolButton>
 
               <ToolButton
@@ -716,7 +718,7 @@ export function LessonScreen() {
                 disabled={!glueEnabled}
                 onClick={() => selectTool('glue')}
               >
-                <IconGlue size={48} />
+                <IconGlue size={40} />
               </ToolButton>
 
               <ToolButton
@@ -727,7 +729,7 @@ export function LessonScreen() {
                 disabled={!simplifyEnabled}
                 onClick={() => selectTool('simplify')}
               >
-                <IconSimplify size={44} />
+                <IconSimplify size={38} />
               </ToolButton>
             </div>
           </div>

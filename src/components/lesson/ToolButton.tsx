@@ -40,9 +40,9 @@ export function ToolButton({
       onMouseLeave={release}
       style={{
         position: 'relative',
-        width: 144,
-        padding: '14px 8px 16px',
-        borderRadius: 20,
+        width: 128,
+        padding: '10px 8px 12px',
+        borderRadius: 18,
         fontFamily: 'Fredoka, system-ui, sans-serif',
         background: disabled
           ? 'linear-gradient(180deg, #c8c2b2 0%, #aaa493 100%)'
@@ -79,7 +79,7 @@ export function ToolButton({
       <div
         style={{
           fontWeight: 700,
-          fontSize: 18,
+          fontSize: 16,
           color: disabled ? '#6f6a5e' : INK,
           letterSpacing: 0.3,
         }}
@@ -90,7 +90,7 @@ export function ToolButton({
         <div
           style={{
             fontWeight: 500,
-            fontSize: 12.5,
+            fontSize: 11,
             color: '#6b3f1f',
             opacity: 0.78,
             textAlign: 'center',
