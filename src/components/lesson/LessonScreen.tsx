@@ -46,6 +46,7 @@ import { BeltBar } from './BeltBar';
 import { PauseButton } from './PauseButton';
 import { TopicChip } from './TopicChip';
 import { LessonPane } from './LessonPane';
+import { HintButton } from './HintButton';
 import { IconChop, IconGlue, IconSimplify } from './icons';
 import { getUnlockedBelts, markBeltUnlocked } from '@/utils/storage';
 import type { BeltKey } from '@/core/types';
@@ -121,10 +122,6 @@ export function LessonScreen() {
   >('none');
   const [slotIndex, setSlotIndex] = useState(0);
   const [slotValues, setSlotValues] = useState<(number | null)[]>([]);
-  // Tool moves made since this step's board was last set. Drives the corner
-  // reset chip — it stays hidden until the student has spent more moves than
-  // the puzzle actually needs.
-  const [moveCount, setMoveCount] = useState(0);
   // Belts the student has reached — drives the LessonPane's visible entries
   // and which BeltBar rank squares are jumpable. Loaded once from
   // localStorage; markBeltUnlocked persists each new entry.
@@ -174,7 +171,6 @@ export function LessonScreen() {
   // either enter the follow-up phase or celebrate directly.
   const applyMove = (next: Board) => {
     setBoard(next);
-    setMoveCount((n) => n + 1);
     if (step?.kind === 'board' && step.isComplete(next)) {
       const completedStep = step;
       setSettling(true);
@@ -240,7 +236,6 @@ export function LessonScreen() {
   // auto-selected — the student picks one.
   const enterStep = (next: Step) => {
     setBoard(stepBoard(next));
-    setMoveCount(0);
   };
 
   // Reset every per-step transient — the input fields, follow-up cursor,
@@ -588,11 +583,38 @@ export function LessonScreen() {
                 onPieceTap={handlePieceTap}
                 onGlue={handleGlue}
               />
-              {!celebrating &&
-                !settling &&
-                followUpIndex === null &&
-                step &&
-                moveCount > (step.kind === 'board' ? step.minMoves : 0) && (
+              {/* board's top-right chrome: hint (shows the goal as a popover)
+                  and restart (resets the puzzle's board to its start state).
+                  Both stay visible across all step kinds; the popover only
+                  has content when the step has a goal. */}
+              {!celebrating && !settling && followUpIndex === null && step && (
+                <div
+                  style={{
+                    position: 'absolute',
+                    top: 14,
+                    right: 14,
+                    display: 'flex',
+                    gap: 8,
+                    zIndex: 5,
+                  }}
+                >
+                  <HintButton>
+                    {goalBoard ? (
+                      <GoalPreview board={goalBoard} />
+                    ) : (
+                      <div
+                        style={{
+                          fontFamily: 'Fredoka, system-ui, sans-serif',
+                          fontSize: 14,
+                          color: '#5c3a1e',
+                          padding: '4px 6px',
+                          maxWidth: 180,
+                        }}
+                      >
+                        No goal — this is a free scratchpad.
+                      </div>
+                    )}
+                  </HintButton>
                   <button
                     type="button"
                     aria-label={
@@ -603,13 +625,9 @@ export function LessonScreen() {
                     }
                     onClick={() => {
                       setBoard(stepBoard(step));
-                      setMoveCount(0);
                       playSound('reset');
                     }}
                     style={{
-                      position: 'absolute',
-                      right: 14,
-                      bottom: 14,
                       width: 40,
                       height: 40,
                       borderRadius: 999,
@@ -625,37 +643,19 @@ export function LessonScreen() {
                       justifyContent: 'center',
                       cursor: 'pointer',
                       boxShadow: '0 3px 0 #5c3a1e, 0 4px 10px rgba(0,0,0,0.3)',
-                      zIndex: 5,
+                      padding: 0,
                     }}
                   >
                     ↺
                   </button>
-                )}
-            </div>
-          </div>
-
-          {/* goal column — its own narrow lane, hugging the right edge of
-              the board so the goal preview sits "top right of board"
-              without crowding the tools beneath. */}
-          <div
-            style={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              justifyContent: 'flex-start',
-              width: 116,
-              flexShrink: 0,
-              marginLeft: 12,
-            }}
-          >
-            <div style={{ visibility: goalBoard ? 'visible' : 'hidden' }}>
-              <GoalPreview board={goalBoard ?? board} />
+                </div>
+              )}
             </div>
           </div>
 
           {/* tools column — three buttons in a dedicated lane. The Goal
-              preview lives in its own column to the left so the tools
-              have full vertical room here without competing. */}
+              preview now lives behind a Hint button at the board's top
+              right, so the tools column has full vertical room. */}
           <div
             style={{
               display: 'flex',
