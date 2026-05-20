@@ -152,18 +152,28 @@ describe('Green Belt — Glue introduced (adding like fractions)', () => {
 describe('Blue Belt — equivalence revealed (1/2 = 2/4)', () => {
   const bb = lesson(4);
 
+  // P1 is now the discovery question: look at a free half vs. two free
+  // quarters and write "how many fourths fit one half." The setup has no
+  // master and no goal — the student answers from observation alone.
+  it('P1: same-space discovery accepts 2/4 (and equivalents)', () => {
+    const q = questionStep(bb.steps[0]);
+    expect(q.isCorrect(fraction(2, 4))).toBe(true);
+    expect(q.isCorrect(fraction(1, 2))).toBe(true);
+    expect(q.isCorrect(fraction(3, 4))).toBe(false);
+  });
+
   // The locked master cannot be touched (chop throws); one glue on the
   // free pair builds a 2/4 that equals the master 1/2 in size.
-  it('P1: the master is inert; gluing the free quarters builds 2/4', () => {
-    const p = boardStep(bb.steps[0]);
+  it('P2: the master is inert; gluing the free quarters builds 2/4', () => {
+    const p = boardStep(bb.steps[1]);
     expect(() => chop(p.startBoard, '0:0:0.5:1')).toThrow();
     const next = glue(p.startBoard, '0.5:0:0.5:0.5', '0.5:0.5:0.5:0.5');
     expect(p.isComplete(next)).toBe(true);
   });
 
-  // The equivalence question — 1/2 in fourths is 2/4 (and equivalents).
-  it('P2: the question accepts 2/4 (and equivalents)', () => {
-    const q = questionStep(bb.steps[1]);
+  // The naming question — 1/2 in fourths is 2/4 (and equivalents).
+  it('P3: the question accepts 2/4 (and equivalents)', () => {
+    const q = questionStep(bb.steps[2]);
     expect(q.isCorrect(fraction(2, 4))).toBe(true);
     expect(q.isCorrect(fraction(1, 2))).toBe(true);
     expect(q.isCorrect(fraction(3, 4))).toBe(false);
@@ -271,5 +281,14 @@ describe('Black Belt — mastery (all tools, multiple paths)', () => {
     expect(q.isCorrect(fraction(4, 8))).toBe(true);
     expect(q.isCorrect(fraction(1, 2))).toBe(true);
     expect(q.isCorrect(fraction(3, 8))).toBe(false);
+  });
+
+  // Capstone Q4 — broadens mastery beyond the 1/2 family. 2/8 in simplest
+  // form must be 1/4 exactly (lowest-terms test, not equivalence leniency).
+  it('P5: 2/8 in simplest form accepts only 1/4', () => {
+    const q = questionStep(blk.steps[4]);
+    expect(q.isCorrect(fraction(1, 4))).toBe(true);
+    expect(q.isCorrect(fraction(2, 8))).toBe(false);
+    expect(q.isCorrect(fraction(1, 2))).toBe(false);
   });
 });

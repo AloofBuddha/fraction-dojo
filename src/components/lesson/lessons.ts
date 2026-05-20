@@ -86,6 +86,13 @@ function masterAndFreeHalf(): Board {
   return lockPiece(twoHalves(), LEFT_HALF);
 }
 
+/** One free half on the left, two free quarters on the right — the side-by-
+ *  side picture that opens Blue Belt as a discovery before any master is
+ *  introduced: same space, two names. */
+function halfAndTwoQuarters(): Board {
+  return chop(twoHalves(), RIGHT_HALF);
+}
+
 /** The master 1/2 on the left, two free quarters on the right. */
 function masterAndTwoQuarters(): Board {
   return chop(masterAndFreeHalf(), RIGHT_HALF);
@@ -537,17 +544,32 @@ export const LESSONS: readonly Lesson[] = [
   },
 
   /* ═══ BLUE BELT — Two Names, One Size ════════════════════════════════════
-   * The equivalence reveal. The student glues two quarters into a 2/4 next
-   * to a locked master 1/2 and sees — same size, two names. */
+   * The equivalence reveal. Begins with a discovery — student SEES a half
+   * and two quarters cover the same space — then builds the equivalence
+   * themselves next to a locked master, then names it as a fraction. */
   {
     id: 'blue-belt',
     title: 'Blue Belt',
     belt: 'blue',
     steps: [
       {
+        kind: 'question',
+        instruction:
+          'Look — one yellow half on the left, two quarters on the right. They cover the SAME SPACE on the board. How many fourths is one half? Write it as a fraction.',
+        scratchBoard: halfAndTwoQuarters(),
+        isCorrect: (answer) => areEquivalent(answer, fraction(2, 4)),
+        correctLine:
+          'Same space, two names — one half IS two fourths. 1/2 = 2/4. We call that EQUIVALENT.',
+        wrongLine:
+          'Count the quarters on the right that cover the same space as the half on the left.',
+        hints: [
+          'Two quarters cover the same space as one half — write 2 over 4.',
+        ],
+      },
+      {
         kind: 'board',
         instruction:
-          'The stone master on the left is 1/2. Glue your two quarters into one piece the same size.',
+          'Now build it yourself. The stone master on the left is 1/2. Glue your two quarters into one piece the same size.',
         successLine:
           'Two quarters glued — 2/4. The SAME SIZE as the master 1/2. Two names, one amount — they are EQUIVALENT!',
         startBoard: masterAndTwoQuarters(),
@@ -759,6 +781,19 @@ export const LESSONS: readonly Lesson[] = [
         correctLine: 'Four eighths — 4/8. 1/2 = 2/4 = 4/8.',
         wrongLine: 'Four eighths cover one half — write 4 on top.',
         hints: ['How many eighths fit in a half? Four.'],
+      },
+      {
+        kind: 'question',
+        instruction:
+          'Last one — and not about halves this time. What is 2/8 in its simplest form?',
+        scratchBoard: fourQuartersWithOneChopped(),
+        isCorrect: (answer) =>
+          answer.numerator === 1 && answer.denominator === 4,
+        correctLine:
+          '1/4 — equivalence works for every fraction, not only halves.',
+        wrongLine:
+          'Halve top and bottom — 2/8 has a simpler name with smaller numbers.',
+        hints: ['Divide top and bottom each by 2: 2/8 → 1/4.'],
       },
     ],
   },
