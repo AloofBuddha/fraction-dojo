@@ -36,7 +36,7 @@ const TRIGGER_STYLE: CSSProperties = {
 // center of the button so the goal blossoms out from the same point the
 // student tapped. Tapping anywhere (popover itself or outside) closes it.
 // Square by design — the goal it shows is a square thumbnail.
-const POPOVER_SIZE = 200;
+const POPOVER_SIZE = 152;
 const POPOVER_STYLE: CSSProperties = {
   position: 'absolute',
   top: '50%',
