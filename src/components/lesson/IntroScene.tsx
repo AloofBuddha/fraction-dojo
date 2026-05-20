@@ -118,14 +118,14 @@ export function IntroScene({ onDone }: IntroSceneProps) {
       <div className="frame">
         <DojoBackground />
 
-        {/* top bar — only the pause button during intro */}
+        {/* top bar — pause only; matches the lesson screen's slim beam. */}
         <div
           style={{
             position: "absolute",
             top: 0,
             left: 0,
             right: 0,
-            height: 112,
+            height: 72,
             zIndex: 5,
           }}
         >
@@ -141,7 +141,104 @@ export function IntroScene({ onDone }: IntroSceneProps) {
           </div>
         </div>
 
-        {isTitle ? (
+        {/* main row — identical layout to LessonScreen (grid 1fr auto 1fr
+            with the board centered) so progressive reveal of the sensei
+            and board lands them in their final positions, no jump when
+            the intro ends and the lesson screen mounts. */}
+        <div
+          style={{
+            position: "absolute",
+            left: 0,
+            right: 0,
+            top: 138,
+            bottom: 66,
+            display: "grid",
+            gridTemplateColumns: "1fr auto 1fr",
+            alignItems: "stretch",
+            zIndex: 2,
+          }}
+        >
+          {/* sensei column — same as LessonScreen. Bubble grows upward
+              from the sensei's head; sensei feet anchored 32px above
+              the column bottom. */}
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column-reverse",
+              alignItems: "center",
+              justifyContent: "flex-start",
+              height: "100%",
+              paddingBottom: 0,
+              minWidth: 0,
+              minHeight: 0,
+              overflow: "visible",
+            }}
+          >
+            {beat.showSensei && (
+              <div
+                className="sensei-entering"
+                style={{
+                  width: "min(200px, 100%)",
+                  aspectRatio: "400 / 520",
+                  pointerEvents: "none",
+                  flexShrink: 0,
+                }}
+              >
+                <Sensei mood="happy" talking />
+              </div>
+            )}
+            {beat.showSensei && (
+              <div
+                style={{ width: "100%", maxWidth: 420, marginBottom: 0 }}
+              >
+                <SpeechBubble text={beat.text}>
+                  {!isWaiting && (
+                    <button type="button" onClick={advance} style={CONTINUE_BUTTON}>
+                      <span aria-hidden style={{ fontSize: 20, lineHeight: 1 }}>
+                        ✓
+                      </span>
+                      {isLast ? "Begin Training" : "Continue"}
+                    </button>
+                  )}
+                </SpeechBubble>
+              </div>
+            )}
+          </div>
+
+          {/* board column — same sizing as LessonScreen. The board itself
+              only renders once the "what is a fraction" beats begin; until
+              then this column is an empty space placeholder. */}
+          <div
+            style={{
+              display: "grid",
+              placeItems: "start center",
+              width: "min(900px, calc(100vh - 204px))",
+            }}
+          >
+            {beat.showBoard && (
+              <div style={{ position: "relative", width: "100%" }}>
+                <BoardView
+                  board={INTRO_BOARD}
+                  tool={null}
+                  highlightLabel={highlightLabel}
+                  onLabelTap={handleLabelTap}
+                  onPieceTap={() => undefined}
+                  onGlue={() => undefined}
+                />
+              </div>
+            )}
+          </div>
+
+          {/* tools column — empty placeholder during intro; matches the
+              lesson screen's right gutter so the board stays centered. */}
+          <div />
+        </div>
+
+        {/* title overlay — only on the first beat, centered between beam
+            and viewport bottom. Once the student taps Begin the title
+            unmounts and the sensei/bubble take over the lesson layout
+            already rendered behind it. */}
+        {isTitle && (
           <div
             className="dojo-title-in"
             style={{
@@ -183,81 +280,6 @@ export function IntroScene({ onDone }: IntroSceneProps) {
             <button type="button" onClick={advance} style={BEGIN_BUTTON}>
               Begin
             </button>
-          </div>
-        ) : (
-          <div
-            style={{
-              position: "absolute",
-              left: 0,
-              right: 0,
-              top: 200,
-              bottom: 20,
-              display: "grid",
-              gridTemplateColumns: "1fr 2fr 1fr",
-              gap: 20,
-              padding: "0 20px",
-              zIndex: 2,
-            }}
-          >
-            {/* sensei column — same flex-column-reverse pattern as
-                LessonScreen so the bubble sits just above the sensei's head
-                and grows upward as content is added. Keeps the sensei
-                grid-locked to his column even before the board appears. */}
-            <div
-              style={{
-                display: "flex",
-                flexDirection: "column-reverse",
-                alignItems: "center",
-                justifyContent: "flex-start",
-                height: "100%",
-                paddingBottom: 14,
-              }}
-            >
-              {beat.showSensei && (
-                <div
-                  className="sensei-entering"
-                  style={{
-                    width: "min(260px, 100%)",
-                    aspectRatio: "400 / 520",
-                    pointerEvents: "none",
-                    flexShrink: 0,
-                  }}
-                >
-                  <Sensei mood="happy" talking />
-                </div>
-              )}
-              <div style={{ width: "min(100%, 360px)", marginBottom: 8 }}>
-                <SpeechBubble text={beat.text}>
-                  {!isWaiting && (
-                    <button type="button" onClick={advance} style={CONTINUE_BUTTON}>
-                      <span aria-hidden style={{ fontSize: 20, lineHeight: 1 }}>
-                        ✓
-                      </span>
-                      {isLast ? "Begin Training" : "Continue"}
-                    </button>
-                  )}
-                </SpeechBubble>
-              </div>
-            </div>
-
-            {/* the board (one whole) — appears once the fraction beats begin */}
-            <div style={{ display: "grid", placeItems: "start center" }}>
-              {beat.showBoard && (
-                <div style={{ width: "100%" }}>
-                  <BoardView
-                    board={INTRO_BOARD}
-                    tool={null}
-                    highlightLabel={highlightLabel}
-                    onLabelTap={handleLabelTap}
-                    onPieceTap={() => undefined}
-                    onGlue={() => undefined}
-                  />
-                </div>
-              )}
-            </div>
-
-            {/* tools column — intentionally empty during intro */}
-            <div />
           </div>
         )}
       </div>

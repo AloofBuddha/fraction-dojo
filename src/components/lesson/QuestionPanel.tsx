@@ -13,21 +13,19 @@ interface QuestionPanelProps {
   onSubmit: () => void;
 }
 
-// Inputs are borderless — they share the speech bubble's parchment
-// background instead of looking like sub-boxes within it. The fraction
-// line beneath them is the only visual anchor.
+// White input boxes — the box-in-box reads as "type your answer here,"
+// which is exactly what the inputs should communicate.
 const boxStyle: CSSProperties = {
   width: 76,
-  height: 56,
-  border: 'none',
-  background: 'transparent',
+  height: 64,
+  borderRadius: 12,
+  border: `3px solid ${INK}`,
+  background: '#fff',
   textAlign: 'center',
   fontFamily: 'Fredoka, system-ui, sans-serif',
   fontWeight: 700,
   fontSize: 34,
   color: INK,
-  outline: 'none',
-  padding: 0,
 };
 
 export function QuestionPanel({

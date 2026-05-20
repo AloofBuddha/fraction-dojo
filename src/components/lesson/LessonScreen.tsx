@@ -486,7 +486,7 @@ export function LessonScreen() {
               alignItems: 'center',
               justifyContent: 'flex-start',
               height: '100%',
-              paddingBottom: 32,
+              paddingBottom: 0,
               minWidth: 0,
               minHeight: 0,
               overflow: 'visible',
