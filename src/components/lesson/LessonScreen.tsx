@@ -45,7 +45,10 @@ import { DojoBackground } from './DojoBackground';
 import { BeltBar } from './BeltBar';
 import { PauseButton } from './PauseButton';
 import { TopicChip } from './TopicChip';
+import { LessonPane } from './LessonPane';
 import { IconChop, IconGlue, IconSimplify } from './icons';
+import { getUnlockedBelts, markBeltUnlocked } from '@/utils/storage';
+import type { BeltKey } from '@/core/types';
 import '@/styles/dojo.css';
 
 const FIRST_STEP = LESSONS[0].steps[0];
@@ -122,12 +125,33 @@ export function LessonScreen() {
   // reset chip — it stays hidden until the student has spent more moves than
   // the puzzle actually needs.
   const [moveCount, setMoveCount] = useState(0);
+  // Belts the student has reached — drives the LessonPane's visible entries
+  // and which BeltBar rank squares are jumpable. Loaded once from
+  // localStorage; markBeltUnlocked persists each new entry.
+  const [unlocked, setUnlocked] = useState<Set<BeltKey>>(() =>
+    getUnlockedBelts(),
+  );
+  const [paneOpen, setPaneOpen] = useState(false);
 
   const lesson = LESSONS[lessonIndex];
   const step = lesson?.steps[stepIndex];
   const done = lessonIndex >= LESSONS.length;
   const isQuestion = step?.kind === 'question';
   const revealed = revealedTools(lessonIndex, stepIndex);
+
+  // Mark a belt as unlocked (persists to localStorage and updates React
+  // state). No-op when the belt is already unlocked. Used by Advance when
+  // crossing a belt boundary, so the next-belt's pane entry / rank square
+  // becomes available immediately.
+  const unlockBelt = (belt: BeltKey) => {
+    if (unlocked.has(belt)) return;
+    markBeltUnlocked(belt);
+    setUnlocked((prev) => {
+      const next = new Set(prev);
+      next.add(belt);
+      return next;
+    });
+  };
 
   // The current sub-prompt — undefined unless we are in the follow-up phase.
   const followUp =
@@ -219,6 +243,22 @@ export function LessonScreen() {
     setMoveCount(0);
   };
 
+  // Reset every per-step transient — the input fields, follow-up cursor,
+  // celebration / settle flags. Used by both Continue and Jump so a jump
+  // from any state lands in a clean step.
+  const resetTransients = () => {
+    setCelebrating(false);
+    setSettling(false);
+    setFeedbackWrong(false);
+    setNumInput('');
+    setDenInput('');
+    setFollowUpIndex(null);
+    setFollowUpFeedback('none');
+    setSlotIndex(0);
+    setSlotValues([]);
+    setTool(null);
+  };
+
   // Tap Continue once a step is done — move to the next step / lesson.
   const advance = () => {
     if (!lesson) return;
@@ -230,16 +270,31 @@ export function LessonScreen() {
       const nextLesson = LESSONS[lessonIndex + 1];
       setLessonIndex(lessonIndex + 1);
       setStepIndex(0);
-      if (nextLesson) enterStep(nextLesson.steps[0]);
+      if (nextLesson) {
+        enterStep(nextLesson.steps[0]);
+        unlockBelt(nextLesson.belt);
+      }
     }
-    setCelebrating(false);
-    setFeedbackWrong(false);
-    setNumInput('');
-    setDenInput('');
-    setFollowUpIndex(null);
-    setFollowUpFeedback('none');
-    setSlotIndex(0);
-    setSlotValues([]);
+    resetTransients();
+  };
+
+  // Jump to any unlocked lesson — from the LessonPane or a BeltBar rank
+  // square. Lands on the lesson's first step in a clean state.
+  const jumpToLesson = (targetLessonIndex: number) => {
+    const target = LESSONS[targetLessonIndex];
+    if (!target) return;
+    if (!unlocked.has(target.belt)) return; // defensive — UI should hide locked entries
+    setLessonIndex(targetLessonIndex);
+    setStepIndex(0);
+    enterStep(target.steps[0]);
+    resetTransients();
+    setPaneOpen(false);
+    playSound('continue');
+  };
+
+  const jumpToBelt = (belt: BeltKey) => {
+    const targetIndex = LESSONS.findIndex((l) => l.belt === belt);
+    if (targetIndex >= 0) jumpToLesson(targetIndex);
   };
 
   // Check a question step's answer.
@@ -378,6 +433,8 @@ export function LessonScreen() {
               label={lesson ? `${lesson.title}` : 'All Belts Earned'}
               stripes={lesson ? stepIndex + 1 : 0}
               stripesTotal={lesson?.steps.length ?? 0}
+              unlocked={unlocked}
+              onJump={jumpToBelt}
             />
           </div>
           <div
@@ -388,9 +445,18 @@ export function LessonScreen() {
               transform: 'translateY(-50%)',
             }}
           >
-            <TopicChip />
+            <TopicChip onOpen={() => setPaneOpen(true)} />
           </div>
         </div>
+
+        <LessonPane
+          visible={paneOpen}
+          lessons={LESSONS}
+          unlocked={unlocked}
+          currentBelt={lesson?.belt ?? null}
+          onJump={jumpToLesson}
+          onClose={() => setPaneOpen(false)}
+        />
 
         {/* main row — the board is the centerpiece, sized to fill the
             available vertical space (capped at 900 so it never gets absurd

@@ -1,7 +1,5 @@
-/* The top-right "what am I learning" chip. Static today — names the unit
- * the student is on (Equivalent Fractions). The seat is being reserved for
- * a future LessonPane click target that opens a right-side scrollable list
- * of unlocked belts and their lessons. */
+/* The top-right "what am I learning" chip. Tapping it opens the LessonPane
+ * so the student can jump to any unlocked belt's lesson. */
 
 import type { CSSProperties } from 'react';
 
@@ -20,6 +18,8 @@ const CHIP_STYLE: CSSProperties = {
   fontSize: 15,
   letterSpacing: 0.3,
   whiteSpace: 'nowrap',
+  border: 'none',
+  cursor: 'pointer',
 };
 
 const DOT_STYLE: CSSProperties = {
@@ -31,11 +31,31 @@ const DOT_STYLE: CSSProperties = {
   boxShadow: '0 0 0 2px rgba(216,69,61,0.35)',
 };
 
-export function TopicChip() {
+interface TopicChipProps {
+  onOpen: () => void;
+}
+
+export function TopicChip({ onOpen }: TopicChipProps) {
   return (
-    <div style={CHIP_STYLE} aria-label="Current unit">
+    <button
+      type="button"
+      onClick={onOpen}
+      style={CHIP_STYLE}
+      aria-label="Open lessons"
+    >
       <span aria-hidden style={DOT_STYLE} />
       Equivalent Fractions
-    </div>
+      <span
+        aria-hidden
+        style={{
+          fontSize: 12,
+          opacity: 0.7,
+          marginLeft: 4,
+          letterSpacing: 1,
+        }}
+      >
+        ▾
+      </span>
+    </button>
   );
 }

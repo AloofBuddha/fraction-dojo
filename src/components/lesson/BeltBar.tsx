@@ -15,6 +15,7 @@
 
 import type { CSSProperties } from 'react';
 import { BELT_COLORS, BELT_RANKS } from '@/constants/theme';
+import type { BeltKey } from '@/core/types';
 
 interface BeltBarProps {
   /** Index into BELT_RANKS — the student's current belt. */
@@ -27,6 +28,11 @@ interface BeltBarProps {
   stripes?: number;
   /** Total stripe slots — typically the current belt's step count. */
   stripesTotal?: number;
+  /** Belts the student has reached. Unlocked rank squares become clickable
+   *  jump targets; locked ones stay decorative. */
+  unlocked?: Set<BeltKey>;
+  /** Tap an unlocked rank square to jump to that belt's lesson. */
+  onJump?: (belt: BeltKey) => void;
 }
 
 const ROW_STYLE: CSSProperties = {
@@ -53,6 +59,8 @@ export function BeltBar({
   label,
   stripes = 0,
   stripesTotal = 0,
+  unlocked,
+  onJump,
 }: BeltBarProps) {
   // Clamp into BELT_RANKS so an out-of-range "all earned" rankIndex doesn't
   // crash — show the last belt as the active readout in that case.
@@ -65,30 +73,48 @@ export function BeltBar({
 
   return (
     <div style={ROW_STYLE}>
-      {/* rank trail — white through black */}
+      {/* rank trail — white through black. Unlocked squares are buttons
+          that jump to that belt's lesson; locked ones are plain divs. */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
         {BELT_RANKS.map((rank, index) => {
           const past = index < rankIndex;
           const active = index === rankIndex;
           const swatch = BELT_COLORS[rank.key];
+          const isUnlocked = unlocked?.has(rank.key) ?? false;
+          const isJumpable = isUnlocked && !!onJump && !active;
+          const squareStyle: CSSProperties = {
+            width: active ? 26 : 18,
+            height: active ? 26 : 18,
+            borderRadius: 6,
+            background: swatch.color,
+            border: `2px solid ${swatch.trim}`,
+            transform: active ? 'rotate(45deg)' : 'none',
+            boxShadow: active
+              ? '0 0 0 3px rgba(255, 220, 150, 0.55), 0 0 18px rgba(255, 220, 150, 0.6)'
+              : past
+                ? '0 1px 0 rgba(0,0,0,0.35)'
+                : 'none',
+            opacity: past || active ? 1 : 0.45,
+            padding: 0,
+            cursor: isJumpable ? 'pointer' : 'default',
+          };
+          if (isJumpable) {
+            return (
+              <button
+                key={rank.key}
+                type="button"
+                title={`Jump to ${rank.name} Belt`}
+                aria-label={`Jump to ${rank.name} Belt`}
+                onClick={() => onJump?.(rank.key)}
+                style={squareStyle}
+              />
+            );
+          }
           return (
             <div
               key={rank.key}
               title={`${rank.name} belt`}
-              style={{
-                width: active ? 26 : 18,
-                height: active ? 26 : 18,
-                borderRadius: 6,
-                background: swatch.color,
-                border: `2px solid ${swatch.trim}`,
-                transform: active ? 'rotate(45deg)' : 'none',
-                boxShadow: active
-                  ? '0 0 0 3px rgba(255, 220, 150, 0.55), 0 0 18px rgba(255, 220, 150, 0.6)'
-                  : past
-                    ? '0 1px 0 rgba(0,0,0,0.35)'
-                    : 'none',
-                opacity: past || active ? 1 : 0.45,
-              }}
+              style={squareStyle}
             />
           );
         })}
