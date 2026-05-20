@@ -24,30 +24,41 @@ interface SpeechBubbleProps {
  * horizontal bar instead of a text slash. Used by renderRichText below to
  * upgrade any "n/d" pattern in the sensei's line into proper notation. */
 const FRACTION_OUTER: CSSProperties = {
-  display: 'inline-flex',
-  flexDirection: 'column',
-  alignItems: 'center',
-  verticalAlign: '-0.45em',
+  display: 'inline-block',
+  // 'middle' aligns the fraction's vertical centre with the parent's
+  // baseline + x-height/2, so the fraction sits centred on the text's
+  // midline instead of hanging off the baseline.
+  verticalAlign: 'middle',
+  textAlign: 'center',
   margin: '0 0.18em',
   lineHeight: 1,
-  fontSize: '0.78em',
+  // Small enough that the stacked numerator + bar + denominator fits
+  // inside the parent line-height without forcing the line to grow.
+  fontSize: '0.6em',
   fontWeight: 700,
+  // Inline-block content has its baseline at the bottom; with
+  // vertical-align:middle the box extends both above and below the
+  // parent's midline. A tiny upward nudge centres the BAR (visually,
+  // the fraction's "middle") on the parent's x-height instead of the
+  // numerator/denominator midpoint.
+  position: 'relative',
+  top: '-0.06em',
 };
 const FRACTION_BAR: CSSProperties = {
   display: 'block',
   width: '100%',
   height: 2,
   background: 'currentColor',
-  margin: '1px 0',
+  margin: '2px 0',
   borderRadius: 1,
 };
 
 function InlineFraction({ n, d }: { n: string; d: string }) {
   return (
     <span style={FRACTION_OUTER} aria-label={`${n} over ${d}`}>
-      <span style={{ padding: '0 0.15em' }}>{n}</span>
+      <span style={{ display: 'block', padding: '0 0.2em' }}>{n}</span>
       <span style={FRACTION_BAR} aria-hidden />
-      <span style={{ padding: '0 0.15em' }}>{d}</span>
+      <span style={{ display: 'block', padding: '0 0.2em' }}>{d}</span>
     </span>
   );
 }
