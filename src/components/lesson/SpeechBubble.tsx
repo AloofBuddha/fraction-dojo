@@ -6,9 +6,11 @@
  * children so the bubble grows downward with them, never pushing the
  * sensei out of his anchor. */
 
-import type { CSSProperties, ReactNode } from 'react';
+import type { CSSProperties, MouseEvent, ReactNode } from 'react';
+import { useEffect, useState } from 'react';
 import { IconMic } from './icons';
 import { DOJO_RED, INK, PARCHMENT_DARK, PARCHMENT_LIGHT } from '@/constants/theme';
+import { isEnabled, setEnabled, speak, subscribe } from './tts';
 
 interface SpeechBubbleProps {
   text: string;
@@ -83,6 +85,32 @@ function renderRichText(text: string): ReactNode[] {
 }
 
 export function SpeechBubble({ text, accent, talking = true, children }: SpeechBubbleProps) {
+  // Voice state from the tts module — drives the mic chip's icon (muted /
+  // live) and the pulse animation (only when actually speaking).
+  const [voice, setVoice] = useState(() => ({
+    enabled: isEnabled(),
+    speaking: false,
+  }));
+  useEffect(() => subscribe(setVoice), []);
+
+  // Auto-speak whenever the line changes. Empty strings (the intro's
+  // title beat) and pure whitespace are skipped. The speak() helper itself
+  // cancels any in-flight utterance so back-to-back beats don't overlap.
+  useEffect(() => {
+    if (text.trim().length === 0) return;
+    speak(text);
+  }, [text]);
+
+  // The pulsing dot animates only when the sensei is actually speaking,
+  // OR — as a fallback for muted / unsupported environments — when the
+  // caller asked for the legacy "talking" indicator.
+  const pulse = voice.speaking || (talking && !voice.enabled);
+
+  const toggleMute = (event: MouseEvent<HTMLButtonElement>) => {
+    event.stopPropagation();
+    setEnabled(!voice.enabled);
+  };
+
   return (
     <div
       style={{
@@ -110,8 +138,14 @@ export function SpeechBubble({ text, accent, talking = true, children }: SpeechB
           boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
         }}
       />
-      {/* mic indicator — voice-first */}
-      <div
+      {/* mic indicator — also the voice mute toggle. Pulses while the
+          sensei is actually speaking; goes flat (and adds a slash over
+          the mic icon) when the student has muted. */}
+      <button
+        type="button"
+        onClick={toggleMute}
+        aria-label={voice.enabled ? 'Mute sensei' : 'Unmute sensei'}
+        title={voice.enabled ? 'Mute sensei' : 'Unmute sensei'}
         style={{
           position: 'absolute',
           top: -14,
@@ -124,23 +158,51 @@ export function SpeechBubble({ text, accent, talking = true, children }: SpeechB
           alignItems: 'center',
           gap: 6,
           boxShadow: '0 4px 0 rgba(0,0,0,0.25)',
+          fontFamily: 'Fredoka, system-ui, sans-serif',
           fontWeight: 600,
           fontSize: 13,
+          border: 'none',
+          cursor: 'pointer',
+          opacity: voice.enabled ? 1 : 0.72,
         }}
       >
         <span
+          aria-hidden
           style={{
             display: 'inline-block',
             width: 8,
             height: 8,
             borderRadius: 99,
-            background: DOJO_RED,
-            animation: talking ? 'dojo-pulse 900ms ease-in-out infinite' : 'none',
+            background: voice.enabled ? DOJO_RED : 'rgba(255,255,255,0.35)',
+            animation: pulse ? 'dojo-pulse 900ms ease-in-out infinite' : 'none',
           }}
         />
-        <IconMic size={16} />
+        <span
+          style={{
+            position: 'relative',
+            display: 'inline-flex',
+            alignItems: 'center',
+          }}
+        >
+          <IconMic size={16} />
+          {!voice.enabled && (
+            <span
+              aria-hidden
+              style={{
+                position: 'absolute',
+                left: -2,
+                right: -2,
+                top: '48%',
+                height: 2,
+                background: '#fff',
+                transform: 'rotate(-22deg)',
+                borderRadius: 1,
+              }}
+            />
+          )}
+        </span>
         Sensei
-      </div>
+      </button>
 
       <div
         style={{

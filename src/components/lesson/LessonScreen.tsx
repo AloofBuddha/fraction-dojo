@@ -621,22 +621,8 @@ export function LessonScreen() {
                     zIndex: 5,
                   }}
                 >
-                  <HintButton>
-                    {goalBoard ? (
-                      <GoalPreview board={goalBoard} />
-                    ) : (
-                      <div
-                        style={{
-                          fontFamily: 'Fredoka, system-ui, sans-serif',
-                          fontSize: 14,
-                          color: '#5c3a1e',
-                          padding: '4px 6px',
-                          maxWidth: 180,
-                        }}
-                      >
-                        No goal — this is a free scratchpad.
-                      </div>
-                    )}
+                  <HintButton disabled={!goalBoard}>
+                    {goalBoard && <GoalPreview board={goalBoard} />}
                   </HintButton>
                   <button
                     type="button"

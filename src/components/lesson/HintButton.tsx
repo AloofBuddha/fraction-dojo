@@ -10,6 +10,10 @@ import { IconLightbulb } from "./icons";
 interface HintButtonProps {
   /** What the popover shows — typically a GoalPreview. */
   children: ReactNode;
+  /** When true, the trigger is greyed out and can't be opened — used on
+   *  steps that have no goal to reveal (a free-build mastery board, or a
+   *  question scratchpad). */
+  disabled?: boolean;
 }
 
 // Hint button — bright yellow lightbulb to read as "bright idea."
@@ -54,9 +58,12 @@ const POPOVER_STYLE: CSSProperties = {
   cursor: "pointer",
 };
 
-export function HintButton({ children }: HintButtonProps) {
-  const [open, setOpen] = useState(false);
+export function HintButton({ children, disabled = false }: HintButtonProps) {
+  const [openRequested, setOpen] = useState(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
+  // Effective open state — collapses automatically when the parent flips
+  // `disabled` (e.g. the student advances to a step with no goal).
+  const open = openRequested && !disabled;
 
   // Close when the student taps outside the button or popover. Esc also
   // dismisses it (parity with other escape-friendly chrome).
@@ -86,10 +93,22 @@ export function HintButton({ children }: HintButtonProps) {
       <button
         type="button"
         onClick={() => setOpen((value) => !value)}
+        disabled={disabled}
         aria-label={open ? "Hide hint" : "Show hint"}
         aria-expanded={open}
-        title="Show the goal"
-        style={TRIGGER_STYLE}
+        title={disabled ? "No goal for this step" : "Show the goal"}
+        style={{
+          ...TRIGGER_STYLE,
+          ...(disabled
+            ? {
+                background:
+                  "linear-gradient(180deg, #c8c2b2 0%, #aaa493 100%)",
+                cursor: "not-allowed",
+                opacity: 0.55,
+                filter: "grayscale(0.7)",
+              }
+            : null),
+        }}
       >
         <IconLightbulb size={26} />
       </button>
