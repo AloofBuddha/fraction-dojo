@@ -392,10 +392,11 @@ export function LessonScreen() {
           </div>
         </div>
 
-        {/* main row — three fixed-width columns (sensei · board · tools)
-            with space-evenly flex so the gaps grow on wider screens. On a
-            1366x900 viewport this matches the original design; on a 1920x1080
-            it gives the dojo room to breathe rather than letterboxing. */}
+        {/* main row — the board is the centerpiece, sized to fill the
+            available vertical space (capped at 900 so it never gets absurd
+            on 4K). The sensei and tools live in side gutters that absorb
+            whatever horizontal space is left over with flex: 1 each, so the
+            board stays dead-centre under the red plaque on every screen. */}
         <div
           style={{
             position: 'absolute',
@@ -404,9 +405,7 @@ export function LessonScreen() {
             top: 200,
             bottom: 20,
             display: 'flex',
-            justifyContent: 'space-evenly',
             alignItems: 'stretch',
-            padding: '0 20px',
             zIndex: 2,
           }}
         >
@@ -425,8 +424,8 @@ export function LessonScreen() {
               justifyContent: 'flex-start',
               height: '100%',
               paddingBottom: 14,
-              width: 360,
-              flexShrink: 0,
+              flex: 1,
+              minWidth: 0,
             }}
           >
             <div
@@ -504,7 +503,7 @@ export function LessonScreen() {
             style={{
               display: 'grid',
               placeItems: 'start center',
-              width: 'min(640px, calc(100vh - 240px))',
+              width: 'min(900px, calc(100vh - 220px))',
               flexShrink: 0,
             }}
           >
@@ -571,8 +570,8 @@ export function LessonScreen() {
               alignItems: 'center',
               justifyContent: 'flex-start',
               fontFamily: 'Fredoka, system-ui, sans-serif',
-              width: 180,
-              flexShrink: 0,
+              flex: 1,
+              minWidth: 0,
             }}
           >
             {goalBoard && <GoalPreview board={goalBoard} />}
