@@ -407,10 +407,11 @@ export function LessonScreen() {
         <DojoBackground />
         {celebrating && <Confetti />}
 
-        {/* top bar — pause left, belt+stripes center, topic chip right. The
-            bar is sized to just hold those three chrome pieces; the wood
-            beam in DojoBackground matches this height exactly. */}
-        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 64, zIndex: 5 }}>
+        {/* top bar — pause left, belt+stripes center, topic chip right.
+            Sits inside the wood beam with internal padding (chrome insets
+            via left:24 / right:24 below, and vertical centering inside
+            the beam's height). */}
+        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 72, zIndex: 5 }}>
           <div
             style={{ position: 'absolute', left: 24, top: '50%', transform: 'translateY(-50%)' }}
           >
@@ -458,20 +459,19 @@ export function LessonScreen() {
           onClose={() => setPaneOpen(false)}
         />
 
-        {/* main row — the board is the centerpiece. Top margin (beam-bottom
-            to board-top, INCLUDING the hanging plaque) equals bottom margin
-            (board-bottom to viewport bottom) at 40px each. Plaque tucks
-            into the top margin with only a hair of breathing to the board.
-            Sensei and tools live in flex:1 gutters; the tools column has a
-            fixed inner width so its slots stay put even before tools are
-            revealed. */}
+        {/* main row — the board is the centerpiece. The board overlaps the
+            bottom of the hanging plaque so the plaque reads as decorating
+            the board, not floating above it. Bottom margin is slight to
+            match. Sensei and tools live in flex:1 gutters; the tools
+            column reserves slots for all three tools so the layout doesn't
+            flex when a new tool is revealed. */}
         <div
           style={{
             position: 'absolute',
             left: 0,
             right: 0,
-            top: 104,
-            bottom: 40,
+            top: 88,
+            bottom: 28,
             display: 'flex',
             alignItems: 'stretch',
             zIndex: 2,
@@ -577,7 +577,7 @@ export function LessonScreen() {
             style={{
               display: 'grid',
               placeItems: 'start center',
-              width: 'min(900px, calc(100vh - 144px))',
+              width: 'min(900px, calc(100vh - 116px))',
               flexShrink: 0,
             }}
           >
@@ -668,9 +668,9 @@ export function LessonScreen() {
               Your Tools
             </div>
 
-            {/* Three tool slots are always rendered — unrevealed ones use
-             *  visibility:hidden so they reserve the same space. This stops
-             *  the column from shifting when a new tool is introduced. */}
+            {/* TEMP: all three tool slots are forced visible to verify
+             *  the column has room for them. Restore the visibility gate
+             *  (revealed.has(...) ? 'visible' : 'hidden') before shipping. */}
             <div
               style={{
                 display: 'flex',
@@ -679,43 +679,37 @@ export function LessonScreen() {
                 rowGap: 28,
               }}
             >
-              <div style={{ visibility: revealed.has('chop') ? 'visible' : 'hidden' }}>
-                <ToolButton
-                  label="Chop"
-                  hint="Splits a piece in two"
-                  active={tool === 'chop'}
-                  disabled={!chopEnabled}
-                  onClick={() => selectTool('chop')}
-                >
-                  <IconChop size={48} />
-                </ToolButton>
-              </div>
+              <ToolButton
+                label="Chop"
+                hint="Splits a piece in two"
+                active={tool === 'chop'}
+                disabled={!chopEnabled}
+                onClick={() => selectTool('chop')}
+              >
+                <IconChop size={48} />
+              </ToolButton>
 
-              <div style={{ visibility: revealed.has('glue') ? 'visible' : 'hidden' }}>
-                <ToolButton
-                  label="Glue"
-                  hint="Fuses two pieces into one"
-                  accent={TOOL_ACCENT_GLUE}
-                  active={tool === 'glue'}
-                  disabled={!glueEnabled}
-                  onClick={() => selectTool('glue')}
-                >
-                  <IconGlue size={48} />
-                </ToolButton>
-              </div>
+              <ToolButton
+                label="Glue"
+                hint="Fuses two pieces into one"
+                accent={TOOL_ACCENT_GLUE}
+                active={tool === 'glue'}
+                disabled={!glueEnabled}
+                onClick={() => selectTool('glue')}
+              >
+                <IconGlue size={48} />
+              </ToolButton>
 
-              <div style={{ visibility: revealed.has('simplify') ? 'visible' : 'hidden' }}>
-                <ToolButton
-                  label="Simplify"
-                  hint="Reduces a piece to lower terms"
-                  accent={TOOL_ACCENT_SIMPLIFY}
-                  active={tool === 'simplify'}
-                  disabled={!simplifyEnabled}
-                  onClick={() => selectTool('simplify')}
-                >
-                  <IconSimplify size={44} />
-                </ToolButton>
-              </div>
+              <ToolButton
+                label="Simplify"
+                hint="Reduces a piece to lower terms"
+                accent={TOOL_ACCENT_SIMPLIFY}
+                active={tool === 'simplify'}
+                disabled={!simplifyEnabled}
+                onClick={() => selectTool('simplify')}
+              >
+                <IconSimplify size={44} />
+              </ToolButton>
             </div>
           </div>
         </div>

@@ -87,15 +87,16 @@ export function DojoBackground() {
         <rect x="0" y="0" width="1366" height="640" fill="url(#shoji)" />
       </svg>
 
-      {/* slim wooden header beam — only as thick as the pause / belt /
-       *  topic chrome on top of it needs. */}
+      {/* slim wooden header beam — edge-to-edge; chrome riding on top of
+       *  it (pause / belt / topic) supplies the internal left/right/bottom
+       *  padding via its own positioning. */}
       <div
         style={{
           position: "absolute",
           top: 0,
           left: 0,
           right: 0,
-          height: 64,
+          height: 72,
           background:
             "repeating-linear-gradient(90deg, rgba(0,0,0,0.12) 0px, rgba(0,0,0,0.12) 2px, transparent 2px, transparent 64px)," +
             "linear-gradient(180deg, #a4703f 0%, #7a4a26 55%, #5a3318 100%)",
@@ -104,16 +105,17 @@ export function DojoBackground() {
         }}
       />
 
-      {/* hanging plaque — slim, hangs from the beam so the board can sit
-       *  almost right under it with only a hair of breathing space. */}
+      {/* hanging plaque — hangs from the beam and extends BELOW it so the
+       *  board can overlap the bottom of it (instead of sitting cleanly
+       *  beneath). The hanging strings ride inside the beam. */}
       <div
         style={{
           position: "absolute",
           left: "50%",
-          top: 64,
+          top: 48,
           transform: "translateX(-50%)",
           width: 200,
-          height: 44,
+          height: 54,
           pointerEvents: "none",
         }}
       >
