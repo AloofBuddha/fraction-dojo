@@ -104,16 +104,16 @@ export function DojoBackground() {
         }}
       />
 
-      {/* hanging plaque — hangs straight off the beam (strings ride just
-       *  inside the beam, the badge clears below). */}
+      {/* hanging plaque — slim, hangs from the beam so the board can sit
+       *  almost right under it with only a hair of breathing space. */}
       <div
         style={{
           position: "absolute",
           left: "50%",
-          top: 78,
+          top: 64,
           transform: "translateX(-50%)",
-          width: 220,
-          height: 56,
+          width: 200,
+          height: 44,
           pointerEvents: "none",
         }}
       >

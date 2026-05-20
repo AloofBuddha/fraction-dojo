@@ -458,18 +458,20 @@ export function LessonScreen() {
           onClose={() => setPaneOpen(false)}
         />
 
-        {/* main row — the board is the centerpiece, sized so the breathing
-            ABOVE it (below the hanging plaque) is similar to the breathing
-            BELOW it (above the bottom of the viewport). Sensei and tools
-            live in flex:1 gutters that absorb leftover horizontal space, so
-            the board stays dead-centre under the plaque on every screen. */}
+        {/* main row — the board is the centerpiece. Top margin (beam-bottom
+            to board-top, INCLUDING the hanging plaque) equals bottom margin
+            (board-bottom to viewport bottom) at 40px each. Plaque tucks
+            into the top margin with only a hair of breathing to the board.
+            Sensei and tools live in flex:1 gutters; the tools column has a
+            fixed inner width so its slots stay put even before tools are
+            revealed. */}
         <div
           style={{
             position: 'absolute',
             left: 0,
             right: 0,
-            top: 184,
-            bottom: 50,
+            top: 104,
+            bottom: 40,
             display: 'flex',
             alignItems: 'stretch',
             zIndex: 2,
@@ -489,14 +491,14 @@ export function LessonScreen() {
               alignItems: 'center',
               justifyContent: 'flex-start',
               height: '100%',
-              paddingBottom: 14,
+              paddingBottom: 0,
               flex: 1,
               minWidth: 0,
             }}
           >
             <div
               style={{
-                width: 'min(260px, 100%)',
+                width: 'min(200px, 100%)',
                 aspectRatio: '400 / 520',
                 pointerEvents: 'none',
                 flexShrink: 0,
@@ -508,7 +510,13 @@ export function LessonScreen() {
                 talking
               />
             </div>
-            <div style={{ width: 'min(100%, 360px)', marginBottom: 8 }}>
+            <div
+              style={{
+                width: '100%',
+                maxWidth: 420,
+                marginBottom: 0,
+              }}
+            >
               <SpeechBubble text={senseiText}>
                 {isQuestion && !celebrating && (
                   <QuestionPanel
@@ -569,7 +577,7 @@ export function LessonScreen() {
             style={{
               display: 'grid',
               placeItems: 'start center',
-              width: 'min(900px, calc(100vh - 234px))',
+              width: 'min(900px, calc(100vh - 144px))',
               flexShrink: 0,
             }}
           >
@@ -640,7 +648,12 @@ export function LessonScreen() {
               minWidth: 0,
             }}
           >
-            {goalBoard && <GoalPreview board={goalBoard} />}
+            {/* Goal slot is always rendered (visibility-hidden on question
+             *  steps where there's no target board) so the tools below it
+             *  stay anchored at the same Y across the whole curriculum. */}
+            <div style={{ visibility: goalBoard ? 'visible' : 'hidden' }}>
+              <GoalPreview board={goalBoard ?? board} />
+            </div>
 
             <div
               style={{
@@ -655,15 +668,18 @@ export function LessonScreen() {
               Your Tools
             </div>
 
+            {/* Three tool slots are always rendered — unrevealed ones use
+             *  visibility:hidden so they reserve the same space. This stops
+             *  the column from shifting when a new tool is introduced. */}
             <div
               style={{
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center',
-                rowGap: '4rem',
+                rowGap: 28,
               }}
             >
-              {revealed.has('chop') && (
+              <div style={{ visibility: revealed.has('chop') ? 'visible' : 'hidden' }}>
                 <ToolButton
                   label="Chop"
                   hint="Splits a piece in two"
@@ -673,9 +689,9 @@ export function LessonScreen() {
                 >
                   <IconChop size={48} />
                 </ToolButton>
-              )}
+              </div>
 
-              {revealed.has('glue') && (
+              <div style={{ visibility: revealed.has('glue') ? 'visible' : 'hidden' }}>
                 <ToolButton
                   label="Glue"
                   hint="Fuses two pieces into one"
@@ -686,9 +702,9 @@ export function LessonScreen() {
                 >
                   <IconGlue size={48} />
                 </ToolButton>
-              )}
+              </div>
 
-              {revealed.has('simplify') && (
+              <div style={{ visibility: revealed.has('simplify') ? 'visible' : 'hidden' }}>
                 <ToolButton
                   label="Simplify"
                   hint="Reduces a piece to lower terms"
@@ -699,7 +715,7 @@ export function LessonScreen() {
                 >
                   <IconSimplify size={44} />
                 </ToolButton>
-              )}
+              </div>
             </div>
           </div>
         </div>
