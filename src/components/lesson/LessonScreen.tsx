@@ -454,10 +454,11 @@ export function LessonScreen() {
           onClose={() => setPaneOpen(false)}
         />
 
-        {/* main row — the board is the centerpiece. Top margin (beam-bottom
-            to board-top, including the hanging plaque and its wires) is
-            balanced against bottom margin so the board feels centered
-            vertically. Sensei and tools live in flex:1 gutters. */}
+        {/* main row — CSS grid with 1fr | auto | 1fr columns so the board
+            (auto) sits dead-centre between two equal-width gutters
+            regardless of inner padding. Top/bottom margins (138/66) are
+            balanced so the board also sits vertically below the hanging
+            plaque and above the viewport edge by similar gaps. */}
         <div
           style={{
             position: 'absolute',
@@ -465,7 +466,8 @@ export function LessonScreen() {
             right: 0,
             top: 138,
             bottom: 66,
-            display: 'flex',
+            display: 'grid',
+            gridTemplateColumns: '1fr auto 1fr',
             alignItems: 'stretch',
             zIndex: 2,
           }}
@@ -485,7 +487,6 @@ export function LessonScreen() {
               justifyContent: 'flex-start',
               height: '100%',
               paddingBottom: 0,
-              flex: 1,
               minWidth: 0,
             }}
           >
@@ -571,7 +572,6 @@ export function LessonScreen() {
               display: 'grid',
               placeItems: 'start center',
               width: 'min(900px, calc(100vh - 204px))',
-              flexShrink: 0,
             }}
           >
             <div style={{ position: 'relative', width: '100%' }}>
@@ -665,7 +665,6 @@ export function LessonScreen() {
               the board's bottom. */}
           <div
             style={{
-              flex: 1,
               minWidth: 0,
               position: 'relative',
               paddingLeft: 120,
