@@ -1,28 +1,44 @@
 /**
  * The lesson curriculum — hand-authored content for the lesson engine.
  *
- * The demo walks the student through fraction equivalence using only Chop and
- * Glue (Simplify comes later). White Belt teaches the cut (halves, quarters);
- * Yellow Belt introduces Glue and the equivalence 2/4 = 1/2; Orange Belt goes
- * deeper to 4/8 = 1/2. Each challenge has a goal thumbnail and slot-by-slot
- * understanding-check sub-prompts, with a colour language: yellow names the
- * part you have (numerator side), blue names the total parts (denominator).
+ * The whole game teaches **fraction equivalence** (1/2 = 2/4 = 4/8) through
+ * a karate belt ladder. Each belt is one Lesson, each Lesson a tight set of
+ * Steps that introduce ONE new idea before adding the next. A tool is fully
+ * explored on its own belt before a second tool joins.
+ *
+ *   White ─ Meet a half. First chop.
+ *   Yellow ─ Sharper cuts. Quarters and eighths.
+ *   Orange ─ Reading a fraction. Numerator / denominator.
+ *   Green ─ Glue. Combining like parts (1/4 + 1/4 + 1/4 = 3/4).
+ *   Blue ─ Equivalence revealed. 1/2 = 2/4 against a locked master.
+ *   Purple ─ Deeper equivalence. 1/2 = 4/8.
+ *   Brown ─ Simplify. Find the simplest name (4/8 → 2/4 → 1/2).
+ *   Black ─ Mastery. Free build with all three tools, plus capstone questions.
  */
 
-import { type Board, createBoard, chop, glue, lockPiece } from '@/core/board';
+import {
+  type Board,
+  createBoard,
+  chop,
+  glue,
+  lockPiece,
+} from '@/core/board';
+import { areEquivalent, fraction } from '@/core/fraction';
 import type { Lesson } from '@/core/lesson';
 import { DEN_COLOR, NUM_COLOR } from '@/constants/theme';
 
-// Deterministic piece ids — "x:y:w:h" of the piece's rect.
+/* ─── deterministic piece ids ─────────────────────────────────────────────
+ * The board uses "x:y:w:h" of a piece's rect as its id, so the same chop
+ * sequence always produces the same string. Naming the common ones once
+ * keeps the lesson table readable. */
+
 const WHOLE = '0:0:1:1';
 const LEFT_HALF = '0:0:0.5:1';
 const RIGHT_HALF = '0.5:0:0.5:1';
 const RIGHT_TOP_QUARTER = '0.5:0:0.5:0.5';
 const RIGHT_BOTTOM_QUARTER = '0.5:0.5:0.5:0.5';
 
-// The four quarter-ids in a 2×2 tile-up of the board (top-left, bottom-left,
-// top-right, bottom-right). Used for follow-up highlights when the whole board
-// is a grid of quarters.
+/** All four quarter ids when the whole board is a 2×2 tile-up of quarters. */
 const ALL_QUARTERS: readonly string[] = [
   '0:0:0.5:0.5',
   '0:0.5:0.5:0.5',
@@ -30,9 +46,44 @@ const ALL_QUARTERS: readonly string[] = [
   '0.5:0.5:0.5:0.5',
 ];
 
-/** Two halves, the left one locked as the puzzle's "master" 1/2. */
+/** The two left quarters of a 2×2 (top-left + bottom-left). */
+const LEFT_TWO_QUARTERS: readonly string[] = [
+  '0:0:0.5:0.5',
+  '0:0.5:0.5:0.5',
+];
+
+/** Three of the four quarters (top-left, bottom-left, top-right). */
+const THREE_QUARTERS: readonly string[] = [
+  '0:0:0.5:0.5',
+  '0:0.5:0.5:0.5',
+  '0.5:0:0.5:0.5',
+];
+
+/* ─── puzzle setups ───────────────────────────────────────────────────────
+ * Tiny helpers that build the starting/goal boards for each step. Named
+ * after what they LOOK like, not how they're built — the curriculum reads
+ * top-down without diving into rect strings. */
+
+/** A whole board chopped into two halves. */
+function twoHalves(): Board {
+  return chop(createBoard(), WHOLE);
+}
+
+/** A whole board chopped into four equal quarters (2×2 grid). */
+function fourQuarters(): Board {
+  let board = chop(createBoard(), WHOLE);
+  board = chop(board, LEFT_HALF);
+  return chop(board, RIGHT_HALF);
+}
+
+/** Four quarters with one of them chopped further into two eighths. */
+function fourQuartersWithOneChopped(): Board {
+  return chop(fourQuarters(), RIGHT_TOP_QUARTER);
+}
+
+/** Two halves, the left one locked as the puzzle's "master" reference 1/2. */
 function masterAndFreeHalf(): Board {
-  return lockPiece(chop(createBoard(), WHOLE), LEFT_HALF);
+  return lockPiece(twoHalves(), LEFT_HALF);
 }
 
 /** The master 1/2 on the left, two free quarters on the right. */
@@ -45,26 +96,43 @@ function masterAndTwoFourths(): Board {
   return glue(masterAndTwoQuarters(), RIGHT_TOP_QUARTER, RIGHT_BOTTOM_QUARTER);
 }
 
-/** A whole board chopped into four equal quarters in a 2×2 grid. */
-function fourQuarters(): Board {
-  let board = chop(createBoard(), WHOLE);
-  board = chop(board, LEFT_HALF);
-  return chop(board, RIGHT_HALF);
+/** The master 1/2 on the left, four free eighths on the right — the open
+ *  Black-Belt board where many tool sequences can win. */
+function masterAndFourFreeEighths(): Board {
+  let board = masterAndTwoQuarters();
+  board = chop(board, RIGHT_TOP_QUARTER);
+  return chop(board, RIGHT_BOTTOM_QUARTER);
 }
 
-/** The master 1/2 on the left, a 4/8 piece on the right (glued from four eighths). */
+/** The master 1/2 on the left, a 4/8 piece on the right (glued from four
+ *  eighths) — the canonical 1/2 = 4/8 picture. */
 function masterAndFourEighthsGlued(): Board {
-  let board = masterAndFreeHalf();
-  board = chop(board, RIGHT_HALF);
-  board = chop(board, RIGHT_TOP_QUARTER);
-  board = chop(board, RIGHT_BOTTOM_QUARTER);
-  // Now four eighths on the right, in two stacked rows of two.
+  let board = masterAndFourFreeEighths();
   board = glue(board, '0.5:0:0.25:0.5', '0.75:0:0.25:0.5');
   board = glue(board, '0.5:0.5:0.25:0.5', '0.75:0.5:0.25:0.5');
   return glue(board, '0.5:0:0.5:0.5', '0.5:0.5:0.5:0.5');
 }
 
-/** Does the board hold a piece worth exactly this fraction? */
+/** Two quarters glued on the left (2/4), two free quarters on the right —
+ *  the goal picture after the Green Belt's first glue. */
+function twoFourthsAndTwoQuarters(): Board {
+  return glue(fourQuarters(), '0:0:0.5:0.5', '0:0.5:0.5:0.5');
+}
+
+/** All four quarters glued back into a single 4/4 piece covering the whole
+ *  board — the Green Belt's "addition fills the whole" picture. The board
+ *  model only glues rect-into-rect, so the path is left-pair, right-pair,
+ *  then the two halves. */
+function allFourQuartersGlued(): Board {
+  let board = fourQuarters();
+  board = glue(board, '0:0:0.5:0.5', '0:0.5:0.5:0.5'); // left two → 2/4
+  board = glue(board, '0.5:0:0.5:0.5', '0.5:0.5:0.5:0.5'); // right two → 2/4
+  return glue(board, '0:0:0.5:1', '0.5:0:0.5:1'); // both halves → 4/4
+}
+
+/* ─── predicates used by isComplete ──────────────────────────────────────── */
+
+/** Does the board hold a piece worth exactly this fraction (by labels)? */
 function hasPiece(board: Board, numerator: number, denominator: number): boolean {
   return board.pieces.some(
     (piece) =>
@@ -72,20 +140,55 @@ function hasPiece(board: Board, numerator: number, denominator: number): boolean
   );
 }
 
+/** Is there a non-locked piece on the board whose value is equivalent to
+ *  the target fraction? Used by free-build challenges where the student may
+ *  reach the goal in several different denominators. */
+function hasFreePieceEquivalentTo(
+  board: Board,
+  numerator: number,
+  denominator: number,
+): boolean {
+  const target = fraction(numerator, denominator);
+  return board.pieces.some(
+    (piece) => !piece.locked && areEquivalent(piece.value, target),
+  );
+}
+
+/** Is every piece on the board labelled with the exact same fraction
+ *  (numerator and denominator)? Used by the Brown Belt simplify chain — the
+ *  master is already 1/2; the student is done when the right piece simplifies
+ *  down to 1/2 as well, so every piece reads 1/2. */
+function everyPieceLabelled(
+  board: Board,
+  numerator: number,
+  denominator: number,
+): boolean {
+  return board.pieces.every(
+    (piece) =>
+      piece.value.numerator === numerator && piece.value.denominator === denominator,
+  );
+}
+
+/* ─── the curriculum ─────────────────────────────────────────────────────── */
+
 export const LESSONS: readonly Lesson[] = [
+  /* ═══ WHITE BELT — Meet a Half ════════════════════════════════════════
+   * One chop. The whole splits in two. Each part is a half — 1/2. */
   {
     id: 'white-belt',
     title: 'White Belt',
+    belt: 'white',
     steps: [
-      // P1 — First Chop. Chop the whole into two halves.
       {
         kind: 'board',
         instruction:
-          'Your first challenge. Use the Chop tool to make your board match the goal — two equal halves.',
-        successLine: 'One whole becomes two halves — 1 = 1/2 + 1/2.',
+          'Your first challenge. Tap the Chop tool, then tap the board to split it into two equal parts.',
+        successLine:
+          'One chop, two halves! Each part is called a HALF — written 1/2.',
         startBoard: createBoard(),
-        goalBoard: chop(createBoard(), WHOLE),
+        goalBoard: twoHalves(),
         allowedTools: ['chop'],
+        maxDenominator: 2,
         minMoves: 1,
         isComplete: (board) => board.pieces.length === 2,
         hints: ['Tap the Chop tool to pick it up, then tap the board.'],
@@ -94,20 +197,20 @@ export const LESSONS: readonly Lesson[] = [
             options: [1, 2, 4],
             slots: [
               {
-                prompt: 'How many parts is the whole board split into now?',
+                prompt: 'How many equal parts is the board now?',
                 correctValue: 2,
                 wrongLine: 'Count the pieces inside the blue box.',
                 color: DEN_COLOR,
                 highlightPieces: [LEFT_HALF, RIGHT_HALF],
               },
             ],
-            correctLine: 'Two parts — yes!',
+            correctLine: 'Two equal parts — yes!',
           },
           {
             options: [1, 2, 4],
             slots: [
               {
-                prompt: 'And the yellow slice on its own — how many parts is that?',
+                prompt: 'Just the yellow slice on its own — how many parts is that?',
                 correctValue: 1,
                 wrongLine: 'Just the yellow piece. How many is that?',
                 color: NUM_COLOR,
@@ -120,14 +223,14 @@ export const LESSONS: readonly Lesson[] = [
             options: [1, 2, 4],
             slots: [
               {
-                prompt: 'Parts you have — fill the top slot.',
+                prompt: 'Put it together — parts you have on top.',
                 correctValue: 1,
                 wrongLine: 'Just the yellow slice — how many?',
                 color: NUM_COLOR,
                 highlightPiece: RIGHT_HALF,
               },
               {
-                prompt: 'And parts in total — fill the bottom slot.',
+                prompt: 'And parts in total on the bottom.',
                 correctValue: 2,
                 wrongLine: 'Count all the pieces in the blue box.',
                 color: DEN_COLOR,
@@ -138,12 +241,31 @@ export const LESSONS: readonly Lesson[] = [
           },
         ],
       },
-      // P2 — Quarters. Chop the whole into four equal pieces.
+      {
+        kind: 'question',
+        instruction:
+          'Quick check — if the whole is split into 2 equal parts, what is each piece called?',
+        scratchBoard: twoHalves(),
+        isCorrect: (answer) => areEquivalent(answer, fraction(1, 2)),
+        correctLine: 'Yes — one half. 1/2.',
+        wrongLine: 'One piece out of two — write it as 1 over 2.',
+        hints: ['The piece is 1 of 2 — top is 1, bottom is 2.'],
+      },
+    ],
+  },
+
+  /* ═══ YELLOW BELT — Sharper Cuts ════════════════════════════════════════
+   * Keep chopping. Halves become quarters; quarters become eighths. The
+   * student sees that each chop halves a piece. */
+  {
+    id: 'yellow-belt',
+    title: 'Yellow Belt',
+    belt: 'yellow',
+    steps: [
       {
         kind: 'board',
-        instruction:
-          'Sharper now — chop your board until it is FOUR equal quarters.',
-        successLine: 'Four equal quarters! Each is 1/4 — one part out of four.',
+        instruction: 'Sharper now — chop until the board is FOUR equal parts.',
+        successLine: 'Four equal parts! Each is a QUARTER — 1/4.',
         startBoard: createBoard(),
         goalBoard: fourQuarters(),
         allowedTools: ['chop'],
@@ -155,10 +277,10 @@ export const LESSONS: readonly Lesson[] = [
         hints: ['Chop the whole into halves, then chop each half again.'],
         followUps: [
           {
-            options: [1, 2, 4],
+            options: [1, 2, 4, 8],
             slots: [
               {
-                prompt: 'How many parts is the whole board split into now?',
+                prompt: 'How many equal parts now?',
                 correctValue: 4,
                 wrongLine: 'Count the pieces inside the blue box.',
                 color: DEN_COLOR,
@@ -168,10 +290,10 @@ export const LESSONS: readonly Lesson[] = [
             correctLine: 'Four parts — quarters!',
           },
           {
-            options: [1, 2, 4],
+            options: [1, 2, 4, 8],
             slots: [
               {
-                prompt: 'And the yellow slice on its own — how many parts?',
+                prompt: 'Just the yellow slice — how many parts?',
                 correctValue: 1,
                 wrongLine: 'Just the yellow piece — how many?',
                 color: NUM_COLOR,
@@ -181,47 +303,260 @@ export const LESSONS: readonly Lesson[] = [
             correctLine: 'One — a single quarter.',
           },
           {
-            options: [1, 2, 4],
+            options: [1, 2, 4, 8],
             slots: [
               {
-                prompt: 'Parts you have — fill the top slot.',
+                prompt: 'One of four — fill the top.',
                 correctValue: 1,
                 wrongLine: 'Just the yellow slice — how many?',
                 color: NUM_COLOR,
                 highlightPiece: ALL_QUARTERS[0],
               },
               {
-                prompt: 'And parts in total — fill the bottom slot.',
+                prompt: 'And the bottom — total parts.',
                 correctValue: 4,
-                wrongLine: 'Count all the pieces in the blue box.',
+                wrongLine: 'Count every piece in the blue box.',
                 color: DEN_COLOR,
                 highlightPieces: ALL_QUARTERS,
               },
             ],
-            correctLine: 'One quarter — 1/4. One part of four.',
+            correctLine: 'One quarter — 1/4. One of four parts.',
           },
         ],
       },
-    ],
-  },
-  {
-    id: 'yellow-belt',
-    title: 'Yellow Belt',
-    steps: [
-      // P1 — Glue Introduction. 1/4 + 1/4 = 2/4 = 1/2 (vs the locked master).
       {
         kind: 'board',
         instruction:
-          'Time for a new tool — Glue. The stone master on the left is 1/2. Glue your two quarters into a single piece to match its size.',
+          'Halve a quarter — pick any one piece and chop it. Let us see what we get.',
+        successLine: 'Halve a quarter and you get an EIGHTH — 1/8.',
+        startBoard: fourQuarters(),
+        goalBoard: fourQuartersWithOneChopped(),
+        allowedTools: ['chop'],
+        maxDenominator: 8,
+        minMoves: 1,
+        isComplete: (board) =>
+          board.pieces.some((piece) => piece.value.denominator === 8),
+        hints: ['Tap any one quarter while Chop is selected.'],
+      },
+      {
+        kind: 'question',
+        instruction:
+          'If the whole was split into 8 equal parts, what is each piece called?',
+        scratchBoard: fourQuarters(),
+        isCorrect: (answer) => areEquivalent(answer, fraction(1, 8)),
+        correctLine: 'One eighth — 1/8. One of eight parts.',
+        wrongLine: 'One piece of eight — write it 1 over 8.',
+        hints: ['Top is parts you have (1). Bottom is total parts (8).'],
+      },
+    ],
+  },
+
+  /* ═══ ORANGE BELT — Reading a Fraction ══════════════════════════════════
+   * Numerator on top, denominator on bottom. The student learns to READ a
+   * fraction by counting parts they have over parts in total. Still chop
+   * only — no new tools, only new vocabulary. */
+  {
+    id: 'orange-belt',
+    title: 'Orange Belt',
+    belt: 'orange',
+    steps: [
+      {
+        kind: 'board',
+        instruction:
+          'Chop the board into four equal parts again — then we will learn to READ what we built.',
+        successLine: 'Four equal quarters. Now — let us read them.',
+        startBoard: createBoard(),
+        goalBoard: fourQuarters(),
+        allowedTools: ['chop'],
+        maxDenominator: 4,
+        minMoves: 3,
+        isComplete: (board) =>
+          board.pieces.length === 4 &&
+          board.pieces.every((piece) => piece.value.denominator === 4),
+        hints: ['Chop the whole, then chop each half.'],
+        followUps: [
+          {
+            options: [1, 2, 3, 4],
+            slots: [
+              {
+                prompt: 'Just this one piece — how many parts of the whole?',
+                correctValue: 1,
+                wrongLine: 'One yellow slice. How many?',
+                color: NUM_COLOR,
+                highlightPiece: ALL_QUARTERS[0],
+              },
+            ],
+            correctLine: 'One part — 1.',
+          },
+          {
+            options: [1, 2, 3, 4],
+            slots: [
+              {
+                prompt: 'These two slices together — how many parts?',
+                correctValue: 2,
+                wrongLine: 'Count the yellow slices.',
+                color: NUM_COLOR,
+                highlightPieces: LEFT_TWO_QUARTERS,
+              },
+            ],
+            correctLine: 'Two parts — 2.',
+          },
+          {
+            options: [1, 2, 3, 4],
+            slots: [
+              {
+                prompt: 'And these three — how many parts?',
+                correctValue: 3,
+                wrongLine: 'Count the yellow slices.',
+                color: NUM_COLOR,
+                highlightPieces: THREE_QUARTERS,
+              },
+            ],
+            correctLine: 'Three parts — 3.',
+          },
+          {
+            options: [1, 2, 3, 4],
+            slots: [
+              {
+                prompt: 'And the whole board — how many parts in total?',
+                correctValue: 4,
+                wrongLine: 'Count every piece in the blue box.',
+                color: DEN_COLOR,
+                highlightPieces: ALL_QUARTERS,
+              },
+            ],
+            correctLine: 'Four parts in total — the denominator.',
+          },
+          {
+            options: [1, 2, 3, 4],
+            slots: [
+              {
+                prompt: 'Three of four — top is parts you have.',
+                correctValue: 3,
+                wrongLine: 'Count the yellow slices — three.',
+                color: NUM_COLOR,
+                highlightPieces: THREE_QUARTERS,
+              },
+              {
+                prompt: 'And bottom is parts in total.',
+                correctValue: 4,
+                wrongLine: 'Count every piece in the blue box — four.',
+                color: DEN_COLOR,
+                highlightPieces: ALL_QUARTERS,
+              },
+            ],
+            correctLine: 'Three over four — 3/4. Three of four equal parts.',
+          },
+        ],
+      },
+      {
+        kind: 'question',
+        instruction:
+          'Three of four equal parts — write the fraction that names it.',
+        scratchBoard: fourQuarters(),
+        isCorrect: (answer) => areEquivalent(answer, fraction(3, 4)),
+        correctLine: 'Three over four — 3/4.',
+        wrongLine: 'Top is parts you have (3). Bottom is parts in total (4).',
+        hints: ['Numerator on top, denominator on bottom.'],
+      },
+    ],
+  },
+
+  /* ═══ GREEN BELT — Glue ════════════════════════════════════════════════
+   * The second tool. Glue combines two pieces of the same size into one —
+   * fractions with the same denominator add by adding the numerators. */
+  {
+    id: 'green-belt',
+    title: 'Green Belt',
+    belt: 'green',
+    steps: [
+      {
+        kind: 'board',
+        instruction:
+          'A new tool — Glue. Tap Glue to pick it up, then tap the glowing seam between two quarters to combine them.',
+        successLine: 'Two quarters glued — 2 out of 4 parts. That is 2/4.',
+        startBoard: fourQuarters(),
+        goalBoard: twoFourthsAndTwoQuarters(),
+        allowedTools: ['glue'],
+        minMoves: 1,
+        isComplete: (board) => hasPiece(board, 2, 4),
+        hints: [
+          'Tap the Glue tool first.',
+          'Then tap one of the glowing seams between adjacent quarters.',
+        ],
+        followUps: [
+          {
+            options: [1, 2, 3, 4],
+            slots: [
+              {
+                prompt: 'How many quarters did you glue together?',
+                correctValue: 2,
+                wrongLine: 'Two quarters in your new yellow piece.',
+                color: NUM_COLOR,
+                highlightPiece: '0:0:0.5:1',
+              },
+              {
+                prompt: 'And how many quarters fill the whole board?',
+                correctValue: 4,
+                wrongLine: 'Four quarters make a whole.',
+                color: DEN_COLOR,
+                highlightPieces: [LEFT_HALF, ...ALL_QUARTERS.slice(2)],
+              },
+            ],
+            correctLine: 'Two over four — 2/4.',
+          },
+        ],
+      },
+      {
+        kind: 'board',
+        instruction:
+          'Keep gluing — all four quarters this time, until your board is one whole again.',
         successLine:
-          'Two quarters glued — 2/4. And look, the same size as your master 1/2. Two names, one amount — they are equivalent!',
+          'Four quarters glued — 4/4. Four parts of four IS the whole. 1/4 + 1/4 + 1/4 + 1/4 = 4/4.',
+        startBoard: fourQuarters(),
+        goalBoard: allFourQuartersGlued(),
+        allowedTools: ['glue'],
+        minMoves: 3,
+        isComplete: (board) =>
+          board.pieces.length === 1 && hasPiece(board, 4, 4),
+        hints: [
+          'Glue pairs first (top, bottom, or left, right). Then glue the two halves together.',
+        ],
+      },
+      {
+        kind: 'question',
+        instruction:
+          'Add them up: 1/4 + 1/4 + 1/4. What is the answer?',
+        scratchBoard: fourQuarters(),
+        isCorrect: (answer) => areEquivalent(answer, fraction(3, 4)),
+        correctLine: 'Three quarters — 3/4.',
+        wrongLine: 'Three quarters added together — count them on the board.',
+        hints: ['Three quarters — top is 3, bottom is 4.'],
+      },
+    ],
+  },
+
+  /* ═══ BLUE BELT — Two Names, One Size ════════════════════════════════════
+   * The equivalence reveal. The student glues two quarters into a 2/4 next
+   * to a locked master 1/2 and sees — same size, two names. */
+  {
+    id: 'blue-belt',
+    title: 'Blue Belt',
+    belt: 'blue',
+    steps: [
+      {
+        kind: 'board',
+        instruction:
+          'The stone master on the left is 1/2. Glue your two quarters into one piece the same size.',
+        successLine:
+          'Two quarters glued — 2/4. The SAME SIZE as the master 1/2. Two names, one amount — they are EQUIVALENT!',
         startBoard: masterAndTwoQuarters(),
         goalBoard: masterAndTwoFourths(),
         allowedTools: ['glue'],
         minMoves: 1,
         isComplete: (board) => hasPiece(board, 2, 4),
         hints: [
-          'Tap the new Glue tool to pick it up.',
+          'Tap the Glue tool to pick it up.',
           'Then tap the glowing seam between the two quarters.',
         ],
         followUps: [
@@ -229,14 +564,14 @@ export const LESSONS: readonly Lesson[] = [
             options: [1, 2, 4],
             slots: [
               {
-                prompt: 'How many quarters did you glue into your new piece?',
+                prompt: 'How many quarters did you glue?',
                 correctValue: 2,
-                wrongLine: 'You glued two quarters together — the yellow piece.',
+                wrongLine: 'Two quarters in the yellow piece.',
                 color: NUM_COLOR,
                 highlightPiece: RIGHT_HALF,
               },
               {
-                prompt: 'And how many quarters would fill the whole board?',
+                prompt: 'And how many quarters fill the whole board?',
                 correctValue: 4,
                 wrongLine: 'A whole has four quarters in total.',
                 color: DEN_COLOR,
@@ -247,19 +582,33 @@ export const LESSONS: readonly Lesson[] = [
           },
         ],
       },
+      {
+        kind: 'question',
+        instruction: '1/2 is the same as how many fourths? Fill the fraction.',
+        scratchBoard: masterAndTwoFourths(),
+        isCorrect: (answer) => areEquivalent(answer, fraction(2, 4)),
+        correctLine: '1/2 = 2/4 — two fourths.',
+        wrongLine:
+          'Look at your right piece — same SIZE as the master. Two of how many?',
+        hints: ['Two quarters cover the same space as one half — write 2/4.'],
+      },
     ],
   },
+
+  /* ═══ PURPLE BELT — Deeper Equivalence ═══════════════════════════════════
+   * Chop AND glue together for the first time. Build 4/8 to match the master
+   * 1/2 — the equivalence pattern extends to eighths. */
   {
-    id: 'orange-belt',
-    title: 'Orange Belt',
+    id: 'purple-belt',
+    title: 'Purple Belt',
+    belt: 'purple',
     steps: [
-      // P1 — Build 4/8 from eighths. Equivalence 1/2 = 4/8.
       {
         kind: 'board',
         instruction:
-          'The master still shows 1/2. Use Chop and Glue to build a single piece of EIGHTHS that matches its size.',
+          'The master still shows 1/2. Chop the right half down to eighths, then glue four of them into ONE piece the same size.',
         successLine:
-          'Four eighths glued into 4/8 — the very same size as the master 1/2. 1/2 = 4/8!',
+          'Four eighths glued — 4/8. The same size as 1/2. So 1/2 = 2/4 = 4/8 — they all name the same amount!',
         startBoard: masterAndFreeHalf(),
         goalBoard: masterAndFourEighthsGlued(),
         allowedTools: ['chop', 'glue'],
@@ -267,22 +616,22 @@ export const LESSONS: readonly Lesson[] = [
         minMoves: 6,
         isComplete: (board) => hasPiece(board, 4, 8),
         hints: [
-          'Chop the free half down to four eighths.',
-          'Then glue all four eighths together into one piece.',
+          'First chop the right half into four eighths.',
+          'Then glue all four eighths together — same denominator, so they glue.',
         ],
         followUps: [
           {
             options: [1, 2, 4, 8],
             slots: [
               {
-                prompt: 'How many eighths did you glue into your new piece?',
+                prompt: 'How many eighths did you glue?',
                 correctValue: 4,
-                wrongLine: 'You glued four eighths together — the yellow piece.',
+                wrongLine: 'Four eighths in the yellow piece.',
                 color: NUM_COLOR,
                 highlightPiece: RIGHT_HALF,
               },
               {
-                prompt: 'And how many eighths would fill the whole board?',
+                prompt: 'And how many eighths fill the whole board?',
                 correctValue: 8,
                 wrongLine: 'A whole has eight eighths in total.',
                 color: DEN_COLOR,
@@ -292,6 +641,124 @@ export const LESSONS: readonly Lesson[] = [
             correctLine: 'Four over eight — 4/8. The same size as 1/2.',
           },
         ],
+      },
+      {
+        kind: 'question',
+        instruction: 'And in eighths — 1/2 is the same as how many eighths?',
+        scratchBoard: masterAndFourEighthsGlued(),
+        isCorrect: (answer) => areEquivalent(answer, fraction(4, 8)),
+        correctLine: '1/2 = 4/8 — four eighths.',
+        wrongLine: 'Count the eighths inside the master half — write 4/8.',
+        hints: ['Four eighths fit inside one half. Write 4 over 8.'],
+      },
+    ],
+  },
+
+  /* ═══ BROWN BELT — Simplify ══════════════════════════════════════════════
+   * The third tool. Simplify renames a piece in lower terms WITHOUT changing
+   * its size — same amount, simpler name. */
+  {
+    id: 'brown-belt',
+    title: 'Brown Belt',
+    belt: 'brown',
+    steps: [
+      {
+        kind: 'board',
+        instruction:
+          'A new tool — Simplify. Tap Simplify, then tap the right piece. You will see 2/4 become its simplest name.',
+        successLine:
+          '2/4 simplified to 1/2 — the simplest name for the same amount.',
+        startBoard: masterAndTwoFourths(),
+        goalBoard: masterAndFreeHalf(),
+        allowedTools: ['simplify'],
+        minMoves: 1,
+        isComplete: (board) => !hasPiece(board, 2, 4),
+        hints: ['Tap the Simplify tool, then tap the yellow 2/4 piece.'],
+      },
+      {
+        kind: 'board',
+        instruction:
+          'This piece is 4/8. Simplify it step by step until it cannot get any simpler.',
+        successLine:
+          '4/8 → 2/4 → 1/2. All three are the same amount — 1/2 is its simplest name.',
+        startBoard: masterAndFourEighthsGlued(),
+        goalBoard: masterAndFreeHalf(),
+        allowedTools: ['simplify'],
+        minMoves: 2,
+        isComplete: (board) => everyPieceLabelled(board, 1, 2),
+        hints: [
+          'Simplify halves the top and bottom each tap.',
+          'Tap simplify on the right piece twice — 4/8 → 2/4, then 2/4 → 1/2.',
+        ],
+      },
+      {
+        kind: 'question',
+        instruction: 'What is 4/8 written in its simplest form?',
+        scratchBoard: masterAndFourEighthsGlued(),
+        isCorrect: (answer) =>
+          answer.numerator === 1 && answer.denominator === 2,
+        correctLine: '1/2 — the simplest name for 4/8.',
+        wrongLine:
+          'Keep simplifying — divide top and bottom by the same number until you cannot anymore.',
+        hints: ['Halve top and bottom: 4/8 → 2/4 → 1/2.'],
+      },
+    ],
+  },
+
+  /* ═══ BLACK BELT — Mastery ═══════════════════════════════════════════════
+   * All three tools on the table. A free-build challenge with many valid
+   * solutions, then capstone questions that require fluent reasoning in
+   * both directions (1/2 in n-ths, and n-ths in lowest terms). */
+  {
+    id: 'black-belt',
+    title: 'Black Belt',
+    belt: 'black',
+    steps: [
+      {
+        kind: 'board',
+        instruction:
+          'Final challenge. The master is 1/2. You have four eighths on the right — build ANY single piece equal in size to the master, your way.',
+        successLine:
+          'A piece equal to 1/2 — perfectly equivalent. You have mastered equivalence!',
+        startBoard: masterAndFourFreeEighths(),
+        goalBoard: masterAndFourEighthsGlued(),
+        allowedTools: ['chop', 'glue', 'simplify'],
+        maxDenominator: 64,
+        minMoves: 3,
+        isComplete: (board) => hasFreePieceEquivalentTo(board, 1, 2),
+        hints: [
+          'Glue all four eighths into one piece — that is 4/8, equal to 1/2.',
+          'Or glue pairs first, then glue the pairs together.',
+        ],
+      },
+      {
+        kind: 'question',
+        instruction: 'What is 2/4 written in its simplest form?',
+        scratchBoard: masterAndTwoFourths(),
+        isCorrect: (answer) =>
+          answer.numerator === 1 && answer.denominator === 2,
+        correctLine: '1/2 — the simplest name for 2/4.',
+        wrongLine:
+          'Halve top and bottom — 2/4 becomes a smaller pair of numbers.',
+        hints: ['Divide top and bottom each by 2: 2/4 → 1/2.'],
+      },
+      {
+        kind: 'question',
+        instruction: '1/2 = ?/4 — what number fills the top?',
+        scratchBoard: masterAndTwoFourths(),
+        isCorrect: (answer) => areEquivalent(answer, fraction(2, 4)),
+        correctLine: 'Two fourths — 2/4. 1/2 = 2/4.',
+        wrongLine: 'Two quarters cover one half — write 2 on top.',
+        hints: ['How many quarters fit in a half? Two.'],
+      },
+      {
+        kind: 'question',
+        instruction: 'And in eighths: 1/2 = ?/8 — what number fills the top?',
+        scratchBoard: masterAndFourEighthsGlued(),
+        isCorrect: (answer) => areEquivalent(answer, fraction(4, 8)),
+        correctLine: 'Four eighths — 4/8. 1/2 = 2/4 = 4/8.',
+        wrongLine: 'Four eighths cover one half — write 4 on top.',
+        hints: ['How many eighths fit in a half? Four.'],
       },
     ],
   },

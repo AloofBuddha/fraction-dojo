@@ -1,0 +1,2 @@
+# Working scratch — Playwright captures are useful as local references but should not bloat the repo.
+*.png

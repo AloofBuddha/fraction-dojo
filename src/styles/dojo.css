@@ -37,7 +37,18 @@ body {
   display: grid;
   place-items: center;
   overflow: hidden;
-  background: radial-gradient(ellipse at top, #2c211a 0%, #160f0b 60%, #0a0705 100%);
+  /* Mirrors the frame's vertical color story — warm shoji wall up top,
+   * deep tatami brown at the bottom — so on screens wider than the fixed
+   * 1366×900 canvas the area outside the frame reads as "the dojo
+   * extends," not a black letterbox. */
+  background: linear-gradient(
+    180deg,
+    #f0debb 0%,
+    #e7cea0 45%,
+    #b78f4d 70%,
+    #6b3f1f 88%,
+    #2b1808 100%
+  );
 }
 
 .frame {

@@ -25,7 +25,12 @@ import {
 } from '@/core/board';
 import type { Step, SubPromptSlot } from '@/core/lesson';
 import { fraction } from '@/core/fraction';
-import { INK, TOOL_ACCENT_GLUE, TOOL_ACCENT_SIMPLIFY } from '@/constants/theme';
+import {
+  BELT_RANKS,
+  INK,
+  TOOL_ACCENT_GLUE,
+  TOOL_ACCENT_SIMPLIFY,
+} from '@/constants/theme';
 import { BoardView } from './BoardView';
 import { QuestionPanel } from './QuestionPanel';
 import { Confetti } from './Confetti';
@@ -362,7 +367,11 @@ export function LessonScreen() {
             }}
           >
             <BeltBar
-              rankIndex={Math.min(lessonIndex, LESSONS.length - 1)}
+              rankIndex={
+                lesson
+                  ? BELT_RANKS.findIndex((rank) => rank.key === lesson.belt)
+                  : BELT_RANKS.length
+              }
               label={
                 lesson
                   ? `${lesson.title} · ${stepIndex + 1} / ${lesson.steps.length}`

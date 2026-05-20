@@ -9,6 +9,7 @@
 
 import type { Board, Tool } from './board';
 import type { Fraction } from './fraction';
+import type { BeltKey } from './types';
 
 interface StepBase {
   /** What the sensei says when the step begins. */
@@ -80,9 +81,12 @@ export interface QuestionStep extends StepBase {
 
 export type Step = BoardStep | QuestionStep;
 
-/** An ordered set of steps grouped under one belt. */
+/** An ordered set of steps grouped under one belt. The `belt` key is the
+ *  source of truth for which rank the BeltBar lights up — decoupled from
+ *  the lesson's position in the curriculum array. */
 export interface Lesson {
   readonly id: string;
   readonly title: string;
+  readonly belt: BeltKey;
   readonly steps: readonly Step[];
 }

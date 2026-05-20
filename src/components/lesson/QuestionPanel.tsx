@@ -3,7 +3,7 @@
  * as a scratchpad, so this panel only carries the answer. */
 
 import type { CSSProperties, KeyboardEvent } from 'react';
-import { DOJO_RED, INK, PARCHMENT_DARK, PARCHMENT_LIGHT } from '@/constants/theme';
+import { DOJO_RED, INK } from '@/constants/theme';
 
 interface QuestionPanelProps {
   numerator: string;
@@ -43,11 +43,7 @@ export function QuestionPanel({
         display: 'flex',
         alignItems: 'center',
         gap: 18,
-        padding: '16px 22px',
-        borderRadius: 20,
-        background: `linear-gradient(180deg, ${PARCHMENT_LIGHT} 0%, ${PARCHMENT_DARK} 100%)`,
-        border: `3px solid ${INK}`,
-        boxShadow: `0 0 0 3px ${DOJO_RED}, 0 8px 16px rgba(0,0,0,0.22)`,
+        paddingTop: 4,
       }}
     >
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>

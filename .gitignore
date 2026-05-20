@@ -22,3 +22,7 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Playwright captures — kept in reference_photos/playwright-mcp/ as local
+# scratch, the inner .gitignore strips the PNGs.
+.playwright-mcp/

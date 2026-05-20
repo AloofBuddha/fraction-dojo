@@ -6,8 +6,21 @@
  * the shape never reaches for the table.
  */
 
+/** A karate belt key — one of the eight ranks the curriculum climbs.
+ *  Lessons declare their belt by this key; the BeltBar reads it back to
+ *  light up the right slot regardless of lesson order. */
+export type BeltKey =
+  | 'white'
+  | 'yellow'
+  | 'orange'
+  | 'green'
+  | 'blue'
+  | 'purple'
+  | 'brown'
+  | 'black';
+
 /** A karate belt rank — the ladder a student climbs as lessons complete. */
 export interface BeltRank {
-  readonly key: string;
+  readonly key: BeltKey;
   readonly name: string;
 }
