@@ -381,77 +381,29 @@ export function LessonScreen() {
             zIndex: 2,
           }}
         >
-          {/* sensei: speech bubble, then the answer panel or the Continue gate */}
+          {/* sensei column — sensei anchored at the bottom, his speech bubble
+              sitting just above him with its tail pointing at his head. The
+              bubble grows UPWARD as content is added (NumberPad / Continue
+              gate / question controls) so the tail-to-head relationship is
+              preserved and the sensei never moves. Implemented with
+              flex-direction: column-reverse so both stay in normal flow and
+              keep their grid-column position. */}
           <div
             style={{
               display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'flex-end',
+              flexDirection: 'column-reverse',
               alignItems: 'center',
+              justifyContent: 'flex-start',
               height: '100%',
               paddingBottom: 14,
             }}
           >
-            <div style={{ width: 'min(100%, 360px)' }}>
-              <SpeechBubble text={senseiText} />
-            </div>
-            {isQuestion && !celebrating && (
-              <div style={{ marginTop: 52 }}>
-                <QuestionPanel
-                  numerator={numInput}
-                  denominator={denInput}
-                  onNumerator={editNumerator}
-                  onDenominator={editDenominator}
-                  onSubmit={submitAnswer}
-                />
-              </div>
-            )}
-            {followUp && !celebrating && followUpFeedback !== 'right' && (
-              <div style={{ marginTop: 52 }}>
-                <NumberPad
-                  options={followUp.options}
-                  slots={followUp.slots.map((s, i) => ({
-                    value: slotValues[i] ?? null,
-                    color: s.color,
-                  }))}
-                  focusedIndex={slotIndex}
-                  onTileTap={handleTileTap}
-                />
-              </div>
-            )}
-            {celebrating && (
-              <button
-                type="button"
-                onClick={advance}
-                style={{
-                  marginTop: 52,
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 8,
-                  padding: '12px 26px',
-                  borderRadius: 999,
-                  border: `3px solid ${INK}`,
-                  background: 'linear-gradient(180deg, #7ed47f, #4caf50)',
-                  color: '#fff',
-                  fontFamily: 'Fredoka, system-ui, sans-serif',
-                  fontWeight: 700,
-                  fontSize: 17,
-                  cursor: 'pointer',
-                  boxShadow: `0 5px 0 ${INK}, 0 8px 14px rgba(0,0,0,0.25)`,
-                }}
-              >
-                <span aria-hidden style={{ fontSize: 20, lineHeight: 1 }}>
-                  ✓
-                </span>
-                Continue
-              </button>
-            )}
             <div
               style={{
                 width: 'min(260px, 100%)',
                 aspectRatio: '400 / 520',
-                marginTop: 8,
                 pointerEvents: 'none',
+                flexShrink: 0,
               }}
             >
               <Sensei
@@ -459,6 +411,56 @@ export function LessonScreen() {
                 celebrating={celebrating}
                 talking
               />
+            </div>
+            <div style={{ width: 'min(100%, 360px)', marginBottom: 8 }}>
+              <SpeechBubble text={senseiText}>
+                {isQuestion && !celebrating && (
+                  <QuestionPanel
+                    numerator={numInput}
+                    denominator={denInput}
+                    onNumerator={editNumerator}
+                    onDenominator={editDenominator}
+                    onSubmit={submitAnswer}
+                  />
+                )}
+                {followUp && !celebrating && (
+                  <NumberPad
+                    options={followUp.options}
+                    slots={followUp.slots.map((s, i) => ({
+                      value: slotValues[i] ?? null,
+                      color: s.color,
+                    }))}
+                    focusedIndex={slotIndex}
+                    onTileTap={handleTileTap}
+                  />
+                )}
+                {celebrating && (
+                  <button
+                    type="button"
+                    onClick={advance}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 8,
+                      padding: '12px 26px',
+                      borderRadius: 999,
+                      border: `3px solid ${INK}`,
+                      background: 'linear-gradient(180deg, #7ed47f, #4caf50)',
+                      color: '#fff',
+                      fontFamily: 'Fredoka, system-ui, sans-serif',
+                      fontWeight: 700,
+                      fontSize: 17,
+                      cursor: 'pointer',
+                      boxShadow: `0 5px 0 ${INK}, 0 8px 14px rgba(0,0,0,0.25)`,
+                    }}
+                  >
+                    <span aria-hidden style={{ fontSize: 20, lineHeight: 1 }}>
+                      ✓
+                    </span>
+                    Continue
+                  </button>
+                )}
+              </SpeechBubble>
             </div>
           </div>
 
@@ -470,7 +472,7 @@ export function LessonScreen() {
                 flexDirection: 'column',
                 alignItems: 'center',
                 gap: 14,
-                width: 'min(100%, calc(100svh - 280px))',
+                width: '100%',
               }}
             >
               <BoardView

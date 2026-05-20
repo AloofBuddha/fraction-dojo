@@ -199,47 +199,51 @@ export function IntroScene({ onDone }: IntroSceneProps) {
               zIndex: 2,
             }}
           >
-            {/* sensei + speech + (when not waiting) continue */}
+            {/* sensei column — same flex-column-reverse pattern as
+                LessonScreen so the bubble sits just above the sensei's head
+                and grows upward as content is added. Keeps the sensei
+                grid-locked to his column even before the board appears. */}
             <div
               style={{
                 display: "flex",
-                flexDirection: "column",
-                justifyContent: "flex-end",
+                flexDirection: "column-reverse",
                 alignItems: "center",
+                justifyContent: "flex-start",
                 height: "100%",
                 paddingBottom: 14,
               }}
             >
-              <div style={{ width: "min(100%, 360px)" }}>
-                <SpeechBubble text={beat.text} />
-              </div>
-              {!isWaiting && (
-                <button type="button" onClick={advance} style={CONTINUE_BUTTON}>
-                  <span aria-hidden style={{ fontSize: 20, lineHeight: 1 }}>
-                    ✓
-                  </span>
-                  {isLast ? "Begin Training" : "Continue"}
-                </button>
-              )}
               {beat.showSensei && (
                 <div
                   className="sensei-entering"
                   style={{
                     width: "min(260px, 100%)",
                     aspectRatio: "400 / 520",
-                    marginTop: 8,
                     pointerEvents: "none",
+                    flexShrink: 0,
                   }}
                 >
                   <Sensei mood="happy" talking />
                 </div>
               )}
+              <div style={{ width: "min(100%, 360px)", marginBottom: 8 }}>
+                <SpeechBubble text={beat.text}>
+                  {!isWaiting && (
+                    <button type="button" onClick={advance} style={CONTINUE_BUTTON}>
+                      <span aria-hidden style={{ fontSize: 20, lineHeight: 1 }}>
+                        ✓
+                      </span>
+                      {isLast ? "Begin Training" : "Continue"}
+                    </button>
+                  )}
+                </SpeechBubble>
+              </div>
             </div>
 
             {/* the board (one whole) — appears once the fraction beats begin */}
             <div style={{ display: "grid", placeItems: "start center" }}>
               {beat.showBoard && (
-                <div style={{ width: "min(100%, calc(100svh - 280px))" }}>
+                <div style={{ width: "100%" }}>
                   <BoardView
                     board={INTRO_BOARD}
                     tool={null}
@@ -262,7 +266,6 @@ export function IntroScene({ onDone }: IntroSceneProps) {
 }
 
 const CONTINUE_BUTTON: CSSProperties = {
-  marginTop: 52,
   display: "flex",
   alignItems: "center",
   gap: 8,

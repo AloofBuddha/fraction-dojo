@@ -1,6 +1,12 @@
 /* The sensei's speech bubble — a rice-paper card.
- * Ported from the Claude Design handoff (claude.ai/design). */
+ *
+ * The bubble is the sensei's voice container: the spoken line plus any
+ * follow-up controls (a number pad, an answer panel, a Continue button)
+ * the student needs to act on. Those controls live INSIDE the bubble as
+ * children so the bubble grows downward with them, never pushing the
+ * sensei out of his anchor. */
 
+import type { ReactNode } from 'react';
 import { IconMic } from './icons';
 import { DOJO_RED, INK, PARCHMENT_DARK, PARCHMENT_LIGHT } from '@/constants/theme';
 
@@ -9,9 +15,12 @@ interface SpeechBubbleProps {
   /** A quieter coaching hint shown beneath the main line. */
   accent?: string;
   talking?: boolean;
+  /** Interactive content (NumberPad, QuestionPanel, Continue button) rendered
+   *  inside the bubble below the line. The bubble grows to fit. */
+  children?: ReactNode;
 }
 
-export function SpeechBubble({ text, accent, talking = true }: SpeechBubbleProps) {
+export function SpeechBubble({ text, accent, talking = true, children }: SpeechBubbleProps) {
   return (
     <div
       style={{
@@ -95,7 +104,14 @@ export function SpeechBubble({ text, accent, talking = true }: SpeechBubbleProps
         </div>
       )}
 
-      {/* speech tail — points straight down at the sensei below the bubble */}
+      {children && (
+        <div style={{ marginTop: 18, display: 'flex', justifyContent: 'center' }}>
+          {children}
+        </div>
+      )}
+
+      {/* speech tail — points down past the bubble; if the bubble grows tall
+          enough to cover the sensei, the tail visually trails into him. */}
       <svg
         viewBox="0 0 48 34"
         width="48"

@@ -22,7 +22,10 @@
   --tatami-stripe: #caa063;
 }
 
-/* The lesson is a fixed 1366x900 stage, scaled to fit the viewport. */
+/* The lesson is a fixed 1366x900 stage uniformly scaled to fit the viewport.
+   Every column, gap, and aspect ratio is laid out against that fixed canvas;
+   the transform shrinks (or grows) it as one piece so a laptop, a tablet, and
+   a 4K monitor all see the same composition without cutoffs or reflow. */
 html,
 body {
   overflow: hidden;
@@ -31,18 +34,21 @@ body {
 .stage {
   position: fixed;
   inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
   background: radial-gradient(ellipse at top, #2c211a 0%, #160f0b 60%, #0a0705 100%);
 }
 
-/* The frame fills the whole viewport — no letterboxing. */
 .frame {
   position: relative;
-  width: 100%;
-  height: 100%;
+  width: 1366px;
+  height: 900px;
+  flex-shrink: 0;
   overflow: hidden;
+  transform-origin: center;
+  /* length / length yields a unitless number (CSS Values 4) — modern browsers. */
+  transform: scale(min(calc(100vw / 1366px), calc(100vh / 900px)));
 }
 
 .tatami-pattern {
