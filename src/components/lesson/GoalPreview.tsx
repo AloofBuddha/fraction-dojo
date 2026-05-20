@@ -23,18 +23,18 @@ export function GoalPreview({ board }: GoalPreviewProps) {
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
-        marginBottom: 24,
+        marginBottom: 14,
       }}
     >
       <div
         style={{
           fontFamily: 'Fredoka, system-ui, sans-serif',
           fontWeight: 700,
-          fontSize: 13,
-          letterSpacing: 2,
+          fontSize: 12,
+          letterSpacing: 1.6,
           color: '#7a4a26',
           textTransform: 'uppercase',
-          marginBottom: 8,
+          marginBottom: 6,
         }}
       >
         Goal
@@ -42,12 +42,12 @@ export function GoalPreview({ board }: GoalPreviewProps) {
       <div
         style={{
           position: 'relative',
-          width: 140,
-          height: 140,
+          width: 96,
+          height: 96,
           background: '#8a5224',
           border: `3px solid ${INK}`,
           borderRadius: 8,
-          boxShadow: `0 4px 0 ${INK}`,
+          boxShadow: `0 3px 0 ${INK}`,
           overflow: 'hidden',
         }}
       >

@@ -459,19 +459,17 @@ export function LessonScreen() {
           onClose={() => setPaneOpen(false)}
         />
 
-        {/* main row — the board is the centerpiece. The board overlaps the
-            bottom of the hanging plaque so the plaque reads as decorating
-            the board, not floating above it. Bottom margin is slight to
-            match. Sensei and tools live in flex:1 gutters; the tools
-            column reserves slots for all three tools so the layout doesn't
-            flex when a new tool is revealed. */}
+        {/* main row — the board is the centerpiece. Top margin (beam-bottom
+            to board-top, including the hanging plaque and its wires) is
+            balanced against bottom margin so the board feels centered
+            vertically. Sensei and tools live in flex:1 gutters. */}
         <div
           style={{
             position: 'absolute',
             left: 0,
             right: 0,
-            top: 88,
-            bottom: 28,
+            top: 138,
+            bottom: 66,
             display: 'flex',
             alignItems: 'stretch',
             zIndex: 2,
@@ -577,7 +575,7 @@ export function LessonScreen() {
             style={{
               display: 'grid',
               placeItems: 'start center',
-              width: 'min(900px, calc(100vh - 116px))',
+              width: 'min(900px, calc(100vh - 204px))',
               flexShrink: 0,
             }}
           >
@@ -636,7 +634,28 @@ export function LessonScreen() {
             </div>
           </div>
 
-          {/* tools column — a goal thumbnail above, then revealed tool buttons */}
+          {/* goal column — its own narrow lane, hugging the right edge of
+              the board so the goal preview sits "top right of board"
+              without crowding the tools beneath. */}
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'flex-start',
+              width: 116,
+              flexShrink: 0,
+              marginLeft: 12,
+            }}
+          >
+            <div style={{ visibility: goalBoard ? 'visible' : 'hidden' }}>
+              <GoalPreview board={goalBoard ?? board} />
+            </div>
+          </div>
+
+          {/* tools column — three buttons in a dedicated lane. The Goal
+              preview lives in its own column to the left so the tools
+              have full vertical room here without competing. */}
           <div
             style={{
               display: 'flex',
@@ -648,19 +667,12 @@ export function LessonScreen() {
               minWidth: 0,
             }}
           >
-            {/* Goal slot is always rendered (visibility-hidden on question
-             *  steps where there's no target board) so the tools below it
-             *  stay anchored at the same Y across the whole curriculum. */}
-            <div style={{ visibility: goalBoard ? 'visible' : 'hidden' }}>
-              <GoalPreview board={goalBoard ?? board} />
-            </div>
-
             <div
               style={{
-                marginBottom: 28,
+                marginBottom: 12,
                 fontWeight: 700,
-                fontSize: 13,
-                letterSpacing: 2,
+                fontSize: 12,
+                letterSpacing: 1.6,
                 color: '#7a4a26',
                 textTransform: 'uppercase',
               }}
@@ -676,7 +688,7 @@ export function LessonScreen() {
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center',
-                rowGap: 28,
+                rowGap: 20,
               }}
             >
               <ToolButton

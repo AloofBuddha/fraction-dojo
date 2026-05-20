@@ -105,17 +105,18 @@ export function DojoBackground() {
         }}
       />
 
-      {/* hanging plaque — hangs from the beam and extends BELOW it so the
-       *  board can overlap the bottom of it (instead of sitting cleanly
-       *  beneath). The hanging strings ride inside the beam. */}
+      {/* hanging plaque — wires drop just below the beam edge into open
+       *  air, plaque itself hangs below them with a clear gap to the
+       *  board. Tighter than the previous plaque so the board can stay
+       *  large. */}
       <div
         style={{
           position: "absolute",
           left: "50%",
-          top: 48,
+          top: 84,
           transform: "translateX(-50%)",
           width: 200,
-          height: 54,
+          height: 42,
           pointerEvents: "none",
         }}
       >
