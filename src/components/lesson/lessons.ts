@@ -86,6 +86,7 @@ export const LESSONS: readonly Lesson[] = [
         startBoard: createBoard(),
         goalBoard: chop(createBoard(), WHOLE),
         allowedTools: ['chop'],
+        minMoves: 1,
         isComplete: (board) => board.pieces.length === 2,
         hints: ['Tap the Chop tool to pick it up, then tap the board.'],
         followUps: [
@@ -147,6 +148,7 @@ export const LESSONS: readonly Lesson[] = [
         goalBoard: fourQuarters(),
         allowedTools: ['chop'],
         maxDenominator: 4,
+        minMoves: 3,
         isComplete: (board) =>
           board.pieces.length === 4 &&
           board.pieces.every((piece) => piece.value.denominator === 4),
@@ -216,6 +218,7 @@ export const LESSONS: readonly Lesson[] = [
         startBoard: masterAndTwoQuarters(),
         goalBoard: masterAndTwoFourths(),
         allowedTools: ['glue'],
+        minMoves: 1,
         isComplete: (board) => hasPiece(board, 2, 4),
         hints: [
           'Tap the new Glue tool to pick it up.',
@@ -261,6 +264,7 @@ export const LESSONS: readonly Lesson[] = [
         goalBoard: masterAndFourEighthsGlued(),
         allowedTools: ['chop', 'glue'],
         maxDenominator: 8,
+        minMoves: 6,
         isComplete: (board) => hasPiece(board, 4, 8),
         hints: [
           'Chop the free half down to four eighths.',

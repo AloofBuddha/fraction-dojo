@@ -112,6 +112,10 @@ export function LessonScreen() {
   >('none');
   const [slotIndex, setSlotIndex] = useState(0);
   const [slotValues, setSlotValues] = useState<(number | null)[]>([]);
+  // Tool moves made since this step's board was last set. Drives the corner
+  // reset chip — it stays hidden until the student has spent more moves than
+  // the puzzle actually needs.
+  const [moveCount, setMoveCount] = useState(0);
 
   const lesson = LESSONS[lessonIndex];
   const step = lesson?.steps[stepIndex];
@@ -140,6 +144,7 @@ export function LessonScreen() {
   // either enter the follow-up phase or celebrate directly.
   const applyMove = (next: Board) => {
     setBoard(next);
+    setMoveCount((n) => n + 1);
     if (step?.kind === 'board' && step.isComplete(next)) {
       const completedStep = step;
       setSettling(true);
@@ -205,6 +210,7 @@ export function LessonScreen() {
   // auto-selected — the student picks one.
   const enterStep = (next: Step) => {
     setBoard(stepBoard(next));
+    setMoveCount(0);
   };
 
   // Tap Continue once a step is done — move to the next step / lesson.
@@ -464,17 +470,11 @@ export function LessonScreen() {
             </div>
           </div>
 
-          {/* the board — a puzzle, or a question's scratchpad — and Reset */}
+          {/* the board — a puzzle, or a question's scratchpad. A small reset
+              chip lives in the board's bottom-right corner; it only surfaces
+              once the student has spent more moves than the puzzle needs. */}
           <div style={{ display: 'grid', placeItems: 'start center' }}>
-            <div
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                gap: 14,
-                width: '100%',
-              }}
-            >
+            <div style={{ position: 'relative', width: '100%' }}>
               <BoardView
                 board={board}
                 tool={activeTool}
@@ -483,29 +483,49 @@ export function LessonScreen() {
                 onPieceTap={handlePieceTap}
                 onGlue={handleGlue}
               />
-              {!celebrating && followUpIndex === null && step && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setBoard(stepBoard(step));
-                    playSound('reset');
-                  }}
-                  style={{
-                    padding: '8px 18px',
-                    borderRadius: 999,
-                    border: '2px solid #5c3a1e',
-                    background: 'linear-gradient(180deg, #c99a63, #a9743d)',
-                    color: '#3a2412',
-                    fontFamily: 'Fredoka, system-ui, sans-serif',
-                    fontWeight: 700,
-                    fontSize: 13,
-                    cursor: 'pointer',
-                    boxShadow: '0 3px 0 #5c3a1e',
-                  }}
-                >
-                  {isQuestion ? '↺ Reset the play board' : '↺ Start this puzzle over'}
-                </button>
-              )}
+              {!celebrating &&
+                !settling &&
+                followUpIndex === null &&
+                step &&
+                moveCount > (step.kind === 'board' ? step.minMoves : 0) && (
+                  <button
+                    type="button"
+                    aria-label={
+                      isQuestion ? 'Reset the play board' : 'Start this puzzle over'
+                    }
+                    title={
+                      isQuestion ? 'Reset the play board' : 'Start this puzzle over'
+                    }
+                    onClick={() => {
+                      setBoard(stepBoard(step));
+                      setMoveCount(0);
+                      playSound('reset');
+                    }}
+                    style={{
+                      position: 'absolute',
+                      right: 14,
+                      bottom: 14,
+                      width: 40,
+                      height: 40,
+                      borderRadius: 999,
+                      border: '2px solid #5c3a1e',
+                      background: 'linear-gradient(180deg, #c99a63, #a9743d)',
+                      color: '#3a2412',
+                      fontFamily: 'Fredoka, system-ui, sans-serif',
+                      fontWeight: 700,
+                      fontSize: 20,
+                      lineHeight: 1,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      cursor: 'pointer',
+                      boxShadow: '0 3px 0 #5c3a1e, 0 4px 10px rgba(0,0,0,0.3)',
+                      zIndex: 5,
+                    }}
+                  >
+                    ↺
+                  </button>
+                )}
             </div>
           </div>
 

@@ -31,6 +31,10 @@ export interface BoardStep extends StepBase {
   readonly allowedTools: readonly Tool[];
   /** Tightest denominator the chop tool may reach here (defaults to 1/64). */
   readonly maxDenominator?: number;
+  /** Fewest tool moves that can solve this puzzle. Drives the corner reset
+   *  chip, which only appears once the student exceeds it — a quiet "you may
+   *  have taken a wrong turn" affordance rather than a permanent button. */
+  readonly minMoves: number;
   readonly isComplete: (board: Board) => boolean;
   readonly successLine: string;
   /** Understanding-check prompts asked after the goal is met. */
