@@ -3,7 +3,13 @@
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- Lock the viewport at 100% — the lesson canvas controls its own scale,
+         so a pinch-zoom or browser zoom on the page itself reflows the
+         absolute-positioned chrome in distracting ways. -->
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no"
+    />
     <meta
       name="description"
       content="Fraction Dojo — a voice-first karate-themed math tutor that teaches fraction equivalence."

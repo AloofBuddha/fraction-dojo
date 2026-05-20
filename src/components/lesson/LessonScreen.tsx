@@ -44,6 +44,7 @@ import { SpeechBubble } from './SpeechBubble';
 import { DojoBackground } from './DojoBackground';
 import { BeltBar } from './BeltBar';
 import { PauseButton } from './PauseButton';
+import { TopicChip } from './TopicChip';
 import { IconChop, IconGlue, IconSimplify } from './icons';
 import '@/styles/dojo.css';
 
@@ -351,7 +352,9 @@ export function LessonScreen() {
         <DojoBackground />
         {celebrating && <Confetti />}
 
-        {/* top bar — pause on the left, current belt + step progress centered */}
+        {/* top bar — pause left, belt+stripes center, topic chip right. The
+            chip is the seat reserved for a future lesson-selector pane; for
+            now it's a static readout of what the student is learning. */}
         <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 112, zIndex: 5 }}>
           <div
             style={{ position: 'absolute', left: 24, top: '50%', transform: 'translateY(-50%)' }}
@@ -372,16 +375,27 @@ export function LessonScreen() {
                   ? BELT_RANKS.findIndex((rank) => rank.key === lesson.belt)
                   : BELT_RANKS.length
               }
-              label={
-                lesson
-                  ? `${lesson.title} · ${stepIndex + 1} / ${lesson.steps.length}`
-                  : 'All Belts Earned'
-              }
+              label={lesson ? `${lesson.title}` : 'All Belts Earned'}
+              stripes={lesson ? stepIndex + 1 : 0}
+              stripesTotal={lesson?.steps.length ?? 0}
             />
+          </div>
+          <div
+            style={{
+              position: 'absolute',
+              right: 24,
+              top: '50%',
+              transform: 'translateY(-50%)',
+            }}
+          >
+            <TopicChip />
           </div>
         </div>
 
-        {/* main row — sensei (1/4) · board (2/4) · tools (1/4) */}
+        {/* main row — three fixed-width columns (sensei · board · tools)
+            with space-evenly flex so the gaps grow on wider screens. On a
+            1366x900 viewport this matches the original design; on a 1920x1080
+            it gives the dojo room to breathe rather than letterboxing. */}
         <div
           style={{
             position: 'absolute',
@@ -389,9 +403,9 @@ export function LessonScreen() {
             right: 0,
             top: 200,
             bottom: 20,
-            display: 'grid',
-            gridTemplateColumns: '1fr 2fr 1fr',
-            gap: 20,
+            display: 'flex',
+            justifyContent: 'space-evenly',
+            alignItems: 'stretch',
             padding: '0 20px',
             zIndex: 2,
           }}
@@ -411,6 +425,8 @@ export function LessonScreen() {
               justifyContent: 'flex-start',
               height: '100%',
               paddingBottom: 14,
+              width: 360,
+              flexShrink: 0,
             }}
           >
             <div
@@ -481,8 +497,17 @@ export function LessonScreen() {
 
           {/* the board — a puzzle, or a question's scratchpad. A small reset
               chip lives in the board's bottom-right corner; it only surfaces
-              once the student has spent more moves than the puzzle needs. */}
-          <div style={{ display: 'grid', placeItems: 'start center' }}>
+              once the student has spent more moves than the puzzle needs.
+              The column width caps by min(content max, viewport height minus
+              top/bottom chrome) so the board never overflows a short screen. */}
+          <div
+            style={{
+              display: 'grid',
+              placeItems: 'start center',
+              width: 'min(640px, calc(100vh - 240px))',
+              flexShrink: 0,
+            }}
+          >
             <div style={{ position: 'relative', width: '100%' }}>
               <BoardView
                 board={board}
@@ -546,6 +571,8 @@ export function LessonScreen() {
               alignItems: 'center',
               justifyContent: 'flex-start',
               fontFamily: 'Fredoka, system-ui, sans-serif',
+              width: 180,
+              flexShrink: 0,
             }}
           >
             {goalBoard && <GoalPreview board={goalBoard} />}

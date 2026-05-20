@@ -22,10 +22,12 @@
   --tatami-stripe: #caa063;
 }
 
-/* The lesson is a fixed 1366x900 stage uniformly scaled to fit the viewport.
-   Every column, gap, and aspect ratio is laid out against that fixed canvas;
-   the transform shrinks (or grows) it as one piece so a laptop, a tablet, and
-   a 4K monitor all see the same composition without cutoffs or reflow. */
+/* The lesson lives inside a viewport-spanning frame. Columns and the top bar
+   keep fixed pixel sizes (so positions stay consistent across laptop, tablet
+   and large desktop); the SPACE between them grows on wider screens via
+   space-evenly flex layout, which is what gives the dojo room to breathe on
+   1920+ displays without letterboxing. The board column also caps by viewport
+   height so a short-but-wide screen never pushes the board off the bottom. */
 html,
 body {
   overflow: hidden;
@@ -35,20 +37,16 @@ body {
   position: fixed;
   inset: 0;
   display: grid;
-  place-items: center;
+  place-items: stretch;
   overflow: hidden;
   background: radial-gradient(ellipse at top, #2c211a 0%, #160f0b 60%, #0a0705 100%);
 }
 
 .frame {
   position: relative;
-  width: 1366px;
-  height: 900px;
-  flex-shrink: 0;
+  width: 100vw;
+  height: 100vh;
   overflow: hidden;
-  transform-origin: center;
-  /* length / length yields a unitless number (CSS Values 4) — modern browsers. */
-  transform: scale(min(calc(100vw / 1366px), calc(100vh / 900px)));
 }
 
 .tatami-pattern {
