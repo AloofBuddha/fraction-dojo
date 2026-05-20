@@ -668,7 +668,7 @@ export function LessonScreen() {
               flex: 1,
               minWidth: 0,
               position: 'relative',
-              paddingLeft: 80,
+              paddingLeft: 120,
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'flex-start',
@@ -678,8 +678,8 @@ export function LessonScreen() {
             <div
               style={{
                 position: 'absolute',
-                top: -54,
-                left: 80,
+                top: -28,
+                left: 120,
                 width: 144,
                 textAlign: 'center',
                 fontWeight: 700,
